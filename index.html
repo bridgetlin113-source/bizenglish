@@ -2398,3 +2398,32 @@ function rebindHelpBody(d){
   bindTurn(d);
 }
 
+function showComplete(){
+  if(synth) synth.cancel();
+  document.getElementById('turnArea').innerHTML=`
+  <div style="text-align:center;padding:24px 12px">
+    <div style="font-size:52px;margin-bottom:10px">🎉</div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">完成！你走完了一段完整对话</h2>
+    <p style="color:var(--text-2);font-size:14px;max-width:480px;margin:0 auto 20px;line-height:1.6">
+      升级后的「帮你听懂」带你走了：<b>定位卡点</b>（填空找出没听清的词）→ <b>听感拆解</b>（书面 vs 实际听到的音）→
+      <b>影子跟读</b> → <b>揭示完整原文</b>（英文+中文对照）。<br>
+      正式版会记录你每次卡在哪些词/音，自动生成个性化磨耳朵清单。
+    </p>
+    <div style="display:flex;gap:11px;justify-content:center;flex-wrap:wrap">
+      ${aiEnabled()?`<button class="btn-accent" id="genBtn">✨ 换一段全新对话 →</button>`:''}
+      <button class="btn-primary" id="againBtn">再练这段 →</button>
+      <button class="btn-ghost" id="homeBtn">返回选择</button>
+    </div>
+  </div>`;
+  if(document.getElementById('genBtn')) document.getElementById('genBtn').onclick=()=>{ Object.assign(S,{turn:0,stage:'listen',helpSub:0,selfLevel:null,path:null,myAnswer:'',quizFills:[],quizChecked:false,aiScript:null}); generateDialogue(); };
+  document.getElementById('againBtn').onclick=()=>{ S.turn=0;S.stage='listen';S.helpSub=0;S.selfLevel=null;S.path=null;S.myAnswer='';S.quizFills=[];S.quizChecked=false; renderTurn(); };
+  document.getElementById('homeBtn').onclick=exitSession;
+}
+
+// ============ INIT ============
+renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel();
+document.getElementById('startBtn').onclick=startSession;
+document.getElementById('exitBtn').onclick=exitSession;
+</script>
+</body>
+</html>
