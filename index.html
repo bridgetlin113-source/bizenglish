@@ -2247,17 +2247,6 @@ function togglePlayback(){
     au.onended=()=>{ btn.textContent='▶ 回放我的录音'; };
   } else { au.pause(); btn.textContent='▶ 回放我的录音'; }
 }
-// playback of the user's own recording
-function togglePlayback(){
-  const au=document.getElementById('myAudio'), btn=document.getElementById('pbBtn'), tEl=document.getElementById('pbTime');
-  if(!au || !au.src) return;
-  if(au.paused){
-    au.play();
-    btn.textContent='⏸ 暂停';
-    au.ontimeupdate=()=>{ if(tEl) tEl.textContent=au.currentTime.toFixed(1)+'s'; };
-    au.onended=()=>{ btn.textContent='▶ 回放我的录音'; };
-  } else { au.pause(); btn.textContent='▶ 回放我的录音'; }
-}
 function showMyAnswer(){
   const b=document.getElementById('myAnswerBox'), t=document.getElementById('myAnswerTxt');
   if(b&&t){ if(S.myAnswer){ b.style.display='block'; t.textContent=S.myAnswer; } else b.style.display='none'; }
