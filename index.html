@@ -2171,7 +2171,7 @@ function toggleRec(){
     startRecognitionSafe(box);
     // UI: recording
     recActive=true; btn.classList.add('recording'); btn.textContent='⏹';
-    hint.textContent='🔴 录音中…（再次点击停止）· 说完可回放对比';
+    hint.textContent='🔴 录音中 (v2)…（再次点击停止）· 说完可回放对比';
   }).catch(function(err){
     hint.textContent='没拿到麦克风权限（'+err.name+'）。请在地址栏允许麦克风，或直接打字。';
   });
