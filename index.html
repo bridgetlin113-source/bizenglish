@@ -1630,6 +1630,12 @@ function curTurn(){
 
 
 // ============ STATE ============
+// ⬇⬇⬇ 部署好 Cloudflare Worker 后端后，把它的网址填到这里（形如 https://xxx.workers.dev）
+//     填了就会用真实 AI 反馈；留空则显示示例反馈（原型演示用）。
+const BACKEND_URL = "https://bizenglish-ai.bridgetlin113.workers.dev";  // Cloudflare Worker 后端
+function aiEnabled(){ return typeof BACKEND_URL==='string' && BACKEND_URL.indexOf('http')===0; }
+let fbCache = {};  // 缓存本回合的 AI 反馈结果，避免重复请求
+
 const S = {accent:'in', module:'ec', scn:'req', turn:0, stage:'listen', path:null, helpSub:0, speed:1, selfLevel:null, myAnswer:'', quizFills:[], quizChecked:false, started:false};
 const HELP_SUBS = ['locate','sound','lib','shadow'];
 let synth = window.speechSynthesis; let voices = [];
@@ -2006,19 +2012,43 @@ function ring(pct,color){
       stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"
       transform="rotate(-90 28 28)"/></svg>`;
 }
+function fbActions(){
+  return `<div class="actions">
+    ${S.turn < curScript().length-1
+      ? `<button class="btn-primary" id="nextTurn">下一回合 · 客户继续说 →</button>`
+      : `<button class="btn-primary" id="finishSess">🎉 完成这段对话</button>`}
+    <button class="btn-ghost" id="retrySpeak">重新回应这一句</button>
+  </div>`;
+}
+
 function viewFeedback(d){
+  // AI mode: show a loading shell, then fetch and re-render into #fbBody
+  if(aiEnabled()){
+    // kick off fetch after render
+    setTimeout(function(){ runAIFeedback(d); }, 30);
+    return `
+    <div class="stage-label stage-feedback">✅ 第四步 · 反馈与纠正</div>
+    <div id="fbBody">
+      <div style="text-align:center;padding:34px 16px;color:var(--text-2)">
+        <div style="font-size:34px;margin-bottom:10px">🤖</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 正在分析你的回答…</div>
+        <div style="font-size:13px">根据你实际说的内容，生成语法/用词、地道表达建议与评分</div>
+      </div>
+    </div>
+    ${fbActions()}`;
+  }
+  // Demo mode: preset sample feedback (clearly labeled)
   const sc={pron:82,gram:75,express:70,fluency:78};
   return `
   <div class="stage-label stage-feedback">✅ 第四步 · 反馈与纠正</div>
+  <div style="background:var(--warn-soft);color:var(--warn);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:14px">
+    ⚠️ 这是<b>示例反馈</b>（未接入 AI）。配置后端后将变成针对你实际回答的真实反馈。
+  </div>
   <div class="fb-scores">
     <div class="fb-score"><div class="ring">${ring(sc.pron,'var(--error)')}<div class="num">${sc.pron}</div></div><div class="lbl">发音</div></div>
     <div class="fb-score"><div class="ring">${ring(sc.gram,'var(--warn)')}<div class="num">${sc.gram}</div></div><div class="lbl">语法/用词</div></div>
     <div class="fb-score"><div class="ring">${ring(sc.express,'var(--primary)')}<div class="num">${sc.express}</div></div><div class="lbl">地道表达</div></div>
     <div class="fb-score"><div class="ring">${ring(sc.fluency,'var(--success)')}<div class="num">${sc.fluency}</div></div><div class="lbl">流利度</div></div>
-  </div>
-  <div class="fb-block pron"><h4>🔴 发音纠正（优先）</h4>
-    <div class="fb-item">• <span class="word">calibrated</span> 重音在第一音节：<span class="now">/ˈkæl.ɪ.breɪ.tɪd/</span>，注意 <b>-brat-</b> 不要读成 -bright-。</div>
-    <div class="fb-item">• <span class="word">business units</span> 的 <b>-ness</b> 读得偏重，商务口语中应轻读带过。</div>
   </div>
   <div class="fb-block gram"><h4>🟠 语法 / 用词修正（优先）</h4>
     <div class="fb-item">• <span class="was">SuccessFactors can do the goal cascade</span> → <span class="now">SuccessFactors supports goal cascading</span></div>
@@ -2032,12 +2062,52 @@ function viewFeedback(d){
     <div class="fb-item">• 回应结构清晰（先确认→点功能→反问）👍</div>
     <div class="fb-item">• 抓住了客户的核心提问点。</div>
   </div>
-  <div class="actions">
-    ${S.turn < curScript().length-1
-      ? `<button class="btn-primary" id="nextTurn">下一回合 · 客户继续说 →</button>`
-      : `<button class="btn-primary" id="finishSess">🎉 完成这段对话</button>`}
-    <button class="btn-ghost" id="retrySpeak">重新回应这一句</button>
-  </div>`;
+  ${fbActions()}`;
+}
+
+// Call the backend (which calls Qwen) and render REAL feedback based on the user's actual answer.
+function runAIFeedback(d){
+  var body=document.getElementById('fbBody');
+  var cacheKey=S.turn+'|'+S.myAnswer;
+  if(fbCache[cacheKey]){ renderRealFeedback(fbCache[cacheKey], d); return; }
+  var payload={
+    userAnswer: S.myAnswer||'',
+    clientLine: d.en||'',
+    scenario: (SCENARIOS.find(function(x){return x.id===S.scn;})||{}).name||'',
+    module: (MODULES.find(function(x){return x.id===S.module;})||{}).ab||'',
+    accent: (ACCENTS.find(function(x){return x.id===S.accent;})||{}).name||''
+  };
+  fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.error && !res.scores){
+        if(body) body.innerHTML='<div style="padding:22px;color:var(--error)">AI 反馈出错：'+(res.error||'')+'<br><span style="color:var(--text-2);font-size:12px">可在下方重试，或检查后端配置。</span></div>';
+        return;
+      }
+      fbCache[cacheKey]=res; renderRealFeedback(res, d);
+    })
+    .catch(function(err){
+      if(body) body.innerHTML='<div style="padding:22px;color:var(--error)">连接后端失败：'+err.message+'<br><span style="color:var(--text-2);font-size:12px">请检查 BACKEND_URL 是否填对、Worker 是否已部署。</span></div>';
+    });
+}
+
+function renderRealFeedback(res, d){
+  var body=document.getElementById('fbBody'); if(!body) return;
+  var sc=res.scores||{};
+  function list(items){ return (items&&items.length? items : ['—']).map(function(t){ return '<div class="fb-item">• '+t+'</div>'; }).join(''); }
+  var g=sc.grammar!=null?sc.grammar:'-', e=sc.expression!=null?sc.expression:'-', f=sc.fluency!=null?sc.fluency:'-';
+  body.innerHTML =
+    '<div class="fb-scores">'+
+      '<div class="fb-score"><div class="ring">'+ring(typeof g==='number'?g:0,'var(--warn)')+'<div class="num">'+g+'</div></div><div class="lbl">语法/用词</div></div>'+
+      '<div class="fb-score"><div class="ring">'+ring(typeof e==='number'?e:0,'var(--primary)')+'<div class="num">'+e+'</div></div><div class="lbl">地道表达</div></div>'+
+      '<div class="fb-score"><div class="ring">'+ring(typeof f==='number'?f:0,'var(--success)')+'<div class="num">'+f+'</div></div><div class="lbl">流利度</div></div>'+
+    '</div>'+
+    '<div class="my-answer" style="margin-bottom:14px"><div class="lbl">你的回答</div><div class="txt">'+(S.myAnswer||'')+'</div></div>'+
+    '<div class="fb-block gram"><h4>🟠 语法 / 用词修正</h4>'+list(res.grammar)+'</div>'+
+    '<div class="fb-block express"><h4>🔵 更地道的商务表达建议</h4>'+list(res.expression)+'</div>'+
+    (res.modelAnswer? '<div class="fb-block express"><h4>💡 参考范例回答</h4><div class="fb-item"><span style="display:block;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.55">"'+res.modelAnswer+'"</span></div></div>':'')+
+    '<div class="fb-block good"><h4>🟢 做得好</h4>'+list(res.good)+'</div>'+
+    '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">🤖 由通义千问基于你的实际回答生成 · 发音评分需专业引擎，暂未包含</div>';
 }
 
 // ============ AUDIO ============
@@ -2066,7 +2136,7 @@ function togglePlay(text){
 function initRecog(lang){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR) return null;
-  const r=new SR(); r.lang=lang||'en-US'; r.interimResults=true; r.continuous=false;
+  const r=new SR(); r.lang=lang||'en-US'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
   return r;
 }
 let recog=null, recActive=false;
@@ -2108,27 +2178,35 @@ function toggleRec(){
 }
 
 function stopRec(btn, hint){
+  recActive=false;   // set FIRST so recognition.onend does not auto-restart
   try{ if(mediaRec && mediaRec.state!=='inactive') mediaRec.stop(); }catch(e){}
   try{ if(recog) recog.stop(); }catch(e){}
-  recActive=false;
   if(btn){ btn.classList.remove('recording'); btn.textContent='🎤'; }
-  if(hint) hint.textContent='已停止 · 点▶回放你的录音 · 识别不到可直接打字修改';
+  var shown=(S._finalTxt||'').trim();
+  if(hint) hint.textContent = shown ? ('已停止 · 识别到：'+shown) : '已停止 · 点▶回放你的录音 · 识别不到可直接打字修改';
 }
 
 function startRecognitionSafe(box){
   try{
     if(!recog) recog=initRecog('en-US');
-    if(!recog) return;  // browser doesn't support it — silently skip, recording still works
-    var finalTxt='';
-    recog.onresult=function(e){ var interim='';
-      for(var k=e.resultIndex;k<e.results.length;k++){ var tt=e.results[k][0].transcript; if(e.results[k].isFinal){ finalTxt+=tt; } else { interim+=tt; } }
-      if(box){ box.value=(finalTxt+interim).trim(); S.myAnswer=box.value; showMyAnswer(); }
+    if(!recog){ var h=document.getElementById('recHint'); if(h) h.textContent='🔴 录音中…（此浏览器不支持自动识别，可停止后打字）'; return; }
+    S._finalTxt='';   // accumulated final transcript for this recording
+    recog.onresult=function(e){
+      var interim='';
+      for(var k=e.resultIndex;k<e.results.length;k++){
+        var tt=e.results[k][0].transcript;
+        if(e.results[k].isFinal){ S._finalTxt += (S._finalTxt?' ':'') + tt.trim(); }
+        else { interim += tt; }
+      }
+      var shown=(S._finalTxt+' '+interim).trim();
+      if(box){ box.value=shown; S.myAnswer=shown; showMyAnswer(); }
+      var h=document.getElementById('recHint'); if(h && shown) h.textContent='🔴 识别中：'+shown;
     };
-    // swallow recognition errors — do NOT interrupt recording or nag the user
-    recog.onerror=function(e){ /* no-speech / network / not-allowed under file:// — ignore */ };
-    recog.onend=function(){ /* recognition ended; recording continues until user stops */ };
+    recog.onerror=function(ev){ /* no-speech/network etc — ignore, keep recording */ };
+    // if recognition drops but we're still recording, restart it so long answers aren't cut off
+    recog.onend=function(){ if(recActive){ try{ recog.start(); }catch(e){} } };
     recog.start();
-  }catch(e){ /* recognition unavailable — fine, recording is primary */ }
+  }catch(e){ /* recognition unavailable — recording still primary */ }
 }
 
 // playback of the user's own recording
