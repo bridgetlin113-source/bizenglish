@@ -1608,8 +1608,8 @@ SCRIPTS['rcm_req'] = [
 
 // return the script for the current scenario (fallback to req if none authored yet)
 function scriptKey(m, sc){ return m+'_'+sc; }
-function hasScript(m, sc){ return !!SCRIPTS[scriptKey(m,sc)]; }
-function curScript(){ return SCRIPTS[scriptKey(S.module, S.scn)] || SCRIPTS['ec_req']; }
+function hasScript(m, sc){ return aiEnabled() || !!SCRIPTS[scriptKey(m,sc)]; }
+function curScript(){ return (S.aiScript && S.aiScript.length) ? S.aiScript : (SCRIPTS[scriptKey(S.module, S.scn)] || SCRIPTS['ec_req']); }
 // Build the current turn adapted to the selected accent.
 // A turn may carry byAccent:{us:{sounds,globalTip,pts:{0:[...],1:[...]}}, gb:{...}, au:{...}}.
 // Missing accent overrides fall back to the base (India) content.
@@ -1673,7 +1673,7 @@ function renderModules(){
     </button>`).join('');
   document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
     const m=MODULES.find(x=>x.id===b.dataset.m);
-    if(!m.ready){ alert('「'+m.name+'（'+m.ab+'）」模块即将上线 🚧\n\n本次原型先做了 EC（组织人事）与 Comp（薪酬）两个模块的内容示范，\n用于展示"同一场景 × 不同模块"的业务差异。'); return; }
+    if(!m.ready && !aiEnabled()){ alert('「'+m.name+'（'+m.ab+'）」模块即将上线 🚧\n\n接入 AI 后可对任意模块动态生成对话。'); return; }
     S.module=b.dataset.m;
     // if current scenario has no script for this module, fall back to the first scenario that does
     if(!hasScript(S.module, S.scn)){
@@ -1707,7 +1707,7 @@ function syncSel(){
 
 // ============ SESSION FLOW ============
 function startSession(){
-  Object.assign(S,{started:true,turn:0,stage:'listen',path:null,helpSub:0,speed:1,selfLevel:null,myAnswer:'',quizFills:[],quizChecked:false});
+  Object.assign(S,{started:true,turn:0,stage:'listen',path:null,helpSub:0,speed:1,selfLevel:null,myAnswer:'',quizFills:[],quizChecked:false,aiScript:null});
   const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
   document.getElementById('sPillAccent').textContent=a.flag+' '+a.name;
   document.getElementById('sPillModule').textContent='🧩 '+m.ab;
@@ -1716,7 +1716,30 @@ function startSession(){
   document.getElementById('session').classList.remove('hidden');
   const gf=document.getElementById('globalFoot'); gf.style.display='block';
   gf.innerHTML='🎙️ 提示：语音朗读用浏览器合成（口音效果取决于系统语音包）；口语/跟读需麦克风权限，不支持时可打字。评分为原型模拟。';
-  renderTurn();
+  if(aiEnabled()){ generateDialogue(); } else { renderTurn(); }
+}
+
+// 用 AI 动态生成一段全新对话（无限续练的核心）
+function generateDialogue(){
+  const area=document.getElementById('turnArea');
+  const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
+  if(area) area.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-2)">'+
+    '<div style="font-size:34px;margin-bottom:10px">✨</div>'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 正在为你生成全新对话…</div>'+
+    '<div style="font-size:13px">'+a.name+' × '+m.ab+' × '+s.name+'</div></div>';
+  fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    action:'generate', scenario:s.name, module:m.ab, moduleName:m.name, accent:a.name, turns:3
+  })}).then(function(r){return r.json();}).then(function(res){
+    if(res && res.turns && res.turns.length){
+      S.aiScript=res.turns; S.turn=0; renderTurn();
+    } else {
+      if(area) area.innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--error)">生成失败：'+(res && res.error?res.error:'返回格式异常')+'<br><span style="color:var(--text-2);font-size:12px">将使用内置样例对话。</span></div>';
+      setTimeout(function(){ S.aiScript=null; renderTurn(); },1500);
+    }
+  }).catch(function(err){
+    if(area) area.innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--error)">连接后端失败：'+err.message+'<br><span style="color:var(--text-2);font-size:12px">将使用内置样例对话。</span></div>';
+    setTimeout(function(){ S.aiScript=null; renderTurn(); },1500);
+  });
 }
 function exitSession(){
   if(synth) synth.cancel();
@@ -1992,7 +2015,10 @@ function viewSpeak(d){
       <span class="pb-time" id="pbTime"></span>
       <audio id="myAudio" style="display:none"></audio>
     </div>
-    <textarea class="type-fallback" id="typeBox" placeholder="也可以直接输入你的英文回应…">${S.myAnswer}</textarea>
+    <div style="font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:8px 12px;text-align:left;margin-bottom:8px">
+      💡 语音识别仅供参考，可能不准（尤其 SAP 专业词）。<b>请核对下方文本、修正后再提交</b> —— AI 反馈会基于你提交的文本。
+    </div>
+    <textarea class="type-fallback" id="typeBox" placeholder="识别结果会显示在这里，可自由编辑修正；也可直接打字…">${S.myAnswer}</textarea>
     <div class="my-answer" id="myAnswerBox" style="display:${S.myAnswer?'block':'none'}">
       <div class="lbl">识别到的你的回应（可在上方文本框修改）</div><div class="txt" id="myAnswerTxt">${S.myAnswer}</div>
     </div>
@@ -2071,6 +2097,7 @@ function runAIFeedback(d){
   var cacheKey=S.turn+'|'+S.myAnswer;
   if(fbCache[cacheKey]){ renderRealFeedback(fbCache[cacheKey], d); return; }
   var payload={
+    action: 'feedback',
     userAnswer: S.myAnswer||'',
     clientLine: d.en||'',
     scenario: (SCENARIOS.find(function(x){return x.id===S.scn;})||{}).name||'',
@@ -2371,30 +2398,3 @@ function rebindHelpBody(d){
   bindTurn(d);
 }
 
-function showComplete(){
-  if(synth) synth.cancel();
-  document.getElementById('turnArea').innerHTML=`
-  <div style="text-align:center;padding:24px 12px">
-    <div style="font-size:52px;margin-bottom:10px">🎉</div>
-    <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">完成！你走完了一段完整对话</h2>
-    <p style="color:var(--text-2);font-size:14px;max-width:480px;margin:0 auto 20px;line-height:1.6">
-      升级后的「帮你听懂」带你走了：<b>定位卡点</b>（填空找出没听清的词）→ <b>听感拆解</b>（书面 vs 实际听到的音）→
-      <b>影子跟读</b> → <b>揭示完整原文</b>（英文+中文对照）。<br>
-      正式版会记录你每次卡在哪些词/音，自动生成个性化磨耳朵清单。
-    </p>
-    <div style="display:flex;gap:11px;justify-content:center;flex-wrap:wrap">
-      <button class="btn-primary" id="againBtn">再练一段 →</button>
-      <button class="btn-ghost" id="homeBtn">返回选择</button>
-    </div>
-  </div>`;
-  document.getElementById('againBtn').onclick=()=>{ S.turn=0;S.stage='listen';S.helpSub=0;S.selfLevel=null;S.path=null;S.myAnswer='';S.quizFills=[];S.quizChecked=false; renderTurn(); };
-  document.getElementById('homeBtn').onclick=exitSession;
-}
-
-// ============ INIT ============
-renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel();
-document.getElementById('startBtn').onclick=startSession;
-document.getElementById('exitBtn').onclick=exitSession;
-</script>
-</body>
-</html>
