@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BizEnglish">
+<link rel="manifest" href="manifest.json">
+<title>BizEnglish Coach — SAP SF 商务英语听说训练</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#ffffff; --surface-2:#f0f2f5;
+    --text:#1a2233; --text-2:#5a6478; --muted:#9aa3b2;
+    --border:#e4e8ee; --border-strong:#d4dae3;
+    --primary:#2563eb; --primary-soft:#e8f0fe; --primary-dark:#1d4ed8;
+    --success:#0f9d58; --success-soft:#e6f4ea;
+    --warn:#e8830c; --warn-soft:#fdf0e0;
+    --error:#d93025; --error-soft:#fce8e6;
+    --accent:#7c3aed; --accent-soft:#f1ebfd; --accent-dark:#6d28d9;
+    --radius:14px; --radius-sm:9px; --radius-pill:100px;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,sans-serif;
+    --mono:'SF Mono',Consolas,monospace;
+    --shadow:0 1px 3px rgba(20,30,50,.06),0 4px 16px rgba(20,30,50,.05);
+    --shadow-lg:0 8px 30px rgba(20,30,50,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);font-family:var(--font);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{max-width:920px;margin:0 auto;padding:20px 18px 60px}
+
+  /* ===== Header ===== */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:var(--shadow)}
+  .brand h1{font-size:17px;font-weight:700;letter-spacing:-.2px}
+  .brand p{font-size:12px;color:var(--text-2);margin-top:1px}
+  .streak{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 13px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+  .streak .fire{font-size:15px}
+
+  /* ===== Cards ===== */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .section-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:22px 4px 11px}
+  .section-label:first-of-type{margin-top:6px}
+
+  /* ===== Accent chip selectors ===== */
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-pill);padding:9px 15px;font-size:14px;font-weight:600;color:var(--text-2);transition:all .16s ease}
+  .chip .flag{font-size:17px}
+  .chip:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+  .chip.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-dark)}
+  .chip .diff{font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--radius-pill);background:var(--surface-2);color:var(--muted)}
+  .chip.active .diff{background:#fff;color:var(--primary)}
+  .chip .diff.hard{background:var(--error-soft);color:var(--error)}
+  .chip.active .diff.hard{background:#fff}
+  /* module chips */
+  .mchip{display:flex;align-items:center;gap:9px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-pill);padding:8px 15px 8px 8px;font-size:14px;font-weight:600;color:var(--text-2);transition:all .16s ease}
+  .mchip:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+  .mchip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark)}
+  .mchip.soon{opacity:.6}
+  .mchip .ab{font-size:11px;font-weight:800;padding:4px 9px;border-radius:var(--radius-pill);background:var(--surface-2);color:var(--text-2);letter-spacing:.02em}
+  .mchip.active .ab{background:var(--accent);color:#fff}
+  .mchip .mn{display:flex;flex-direction:column;line-height:1.15;align-items:flex-start}
+  .mchip .mn small{font-size:10.5px;color:var(--muted);font-weight:500}
+  .mchip .st{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:var(--radius-pill);background:var(--surface-2);color:var(--muted);margin-left:2px}
+
+  /* ===== Scenario cards ===== */
+  .scenarios{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .scn{position:relative;text-align:left;padding:16px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);transition:all .16s ease;overflow:hidden}
+  .scn:hover{border-color:var(--border-strong);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+  .scn.active{border-color:var(--primary);background:var(--primary-soft)}
+  .scn .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:19px;background:var(--surface-2);margin-bottom:10px}
+  .scn.active .ic{background:#fff}
+  .scn h3{font-size:14.5px;font-weight:700;margin-bottom:3px}
+  .scn p{font-size:12px;color:var(--text-2);line-height:1.45}
+  .scn .tag{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:var(--radius-pill)}
+  .scn .tag.ready{background:var(--success-soft);color:var(--success)}
+  .scn .tag.soon{background:var(--surface-2);color:var(--muted)}
+
+  /* ===== Start bar ===== */
+  .startbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;padding:16px 18px;border-radius:var(--radius);background:linear-gradient(120deg,#1e293b,#334155);color:#fff;box-shadow:var(--shadow-lg)}
+  .startbar .sel{font-size:13px;opacity:.9}
+  .startbar .sel b{opacity:1}
+  .btn-start{background:#fff;color:#1e293b;font-weight:700;font-size:14.5px;padding:11px 22px;border-radius:var(--radius-pill);display:flex;align-items:center;gap:8px;transition:all .16s ease}
+  .btn-start:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+
+  /* ===== SESSION VIEW ===== */
+  #setup.hidden,#session.hidden{display:none}
+  #session{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .sess-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
+  .sess-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:var(--radius-pill);background:var(--surface);border:1px solid var(--border)}
+  .btn-exit{font-size:13px;color:var(--text-2);font-weight:600;padding:7px 13px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface)}
+  .btn-exit:hover{color:var(--error);border-color:var(--error)}
+
+  /* progress steps */
+  .steps{display:flex;align-items:center;gap:6px;margin-bottom:16px}
+  .step{flex:1;height:5px;border-radius:4px;background:var(--border);overflow:hidden;position:relative}
+  .step.done{background:var(--success)}
+  .step.now{background:var(--primary)}
+
+  /* chat / turn area */
+  .turn{padding:20px}
+  .stage-label{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5px 11px;border-radius:var(--radius-pill);margin-bottom:14px}
+  .stage-listen{background:var(--primary-soft);color:var(--primary-dark)}
+  .stage-help{background:var(--accent-soft);color:var(--accent-dark)}
+  .stage-speak{background:var(--warn-soft);color:var(--warn)}
+  .stage-feedback{background:var(--success-soft);color:var(--success)}
+
+  .speaker{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+  .avatar{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--surface-2);flex-shrink:0}
+  .speaker .nm{font-size:14.5px;font-weight:700}
+  .speaker .rl{font-size:12px;color:var(--text-2)}
+
+  /* audio player */
+  .player{display:flex;align-items:center;gap:14px;background:var(--surface-2);border-radius:var(--radius);padding:15px 17px;margin-bottom:8px}
+  .play-btn{width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:20px;flex-shrink:0;transition:all .16s ease;box-shadow:0 3px 10px rgba(37,99,235,.35)}
+  .play-btn:hover{transform:scale(1.05)}
+  .play-btn.playing{background:var(--error);box-shadow:0 3px 10px rgba(217,48,37,.35)}
+  .play-btn.sm{width:40px;height:40px;font-size:16px}
+  .wave{flex:1;display:flex;align-items:center;gap:3px;height:38px}
+  .wave span{flex:1;background:var(--border-strong);border-radius:3px;height:30%;transition:height .2s ease}
+  .wave.active span{background:var(--primary);animation:bounce 1s ease-in-out infinite}
+  @keyframes bounce{0%,100%{height:20%}50%{height:90%}}
+  .speed-ctrl{display:flex;gap:5px}
+  .speed-btn{font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text-2)}
+  .speed-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  .hint-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+  .hint-btn{font-size:13px;font-weight:600;padding:9px 15px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);display:flex;align-items:center;gap:7px;transition:all .15s ease}
+  .hint-btn:hover{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
+  .hint-btn .em{font-size:15px}
+
+  .btn-primary{background:var(--primary);color:#fff;font-weight:700;font-size:14.5px;padding:12px 24px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:8px;transition:all .16s ease;box-shadow:0 3px 10px rgba(37,99,235,.28)}
+  .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+  .btn-accent{background:var(--accent);color:#fff;font-weight:700;font-size:14.5px;padding:12px 24px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:8px;transition:all .16s ease;box-shadow:0 3px 10px rgba(124,58,237,.28)}
+  .btn-accent:hover{background:var(--accent-dark);transform:translateY(-1px)}
+  .btn-ghost{background:var(--surface);color:var(--text-2);font-weight:600;font-size:14px;padding:12px 20px;border-radius:var(--radius-pill);border:1.5px solid var(--border)}
+  .btn-ghost:hover{border-color:var(--border-strong)}
+  .actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:20px;align-items:center}
+
+  /* self-assessment */
+  .selfcheck{background:var(--surface-2);border-radius:var(--radius);padding:16px 18px;margin-top:16px}
+  .selfcheck h4{font-size:14px;font-weight:700;margin-bottom:12px}
+  .scale{display:flex;gap:8px}
+  .scale-btn{flex:1;text-align:center;padding:12px 8px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);transition:all .15s ease}
+  .scale-btn:hover{border-color:var(--primary)}
+  .scale-btn.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .scale-btn .big{display:block;font-size:20px;margin-bottom:3px}
+
+  /* ===== HELP / DECODE (UPGRADED) ===== */
+  .decode{margin-top:16px;border:1.5px solid var(--accent);border-radius:var(--radius);overflow:hidden;animation:fadeUp .3s ease both}
+  .decode-head{background:var(--accent-soft);padding:12px 16px;font-size:13.5px;font-weight:700;color:var(--accent-dark);display:flex;align-items:center;gap:8px}
+  .decode-body{padding:16px}
+
+  /* sub-step nav within help */
+  .substeps{display:flex;gap:6px;padding:12px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);overflow-x:auto}
+  .substep{flex-shrink:0;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--radius-pill);color:var(--muted);background:var(--surface);border:1.5px solid var(--border);white-space:nowrap}
+  .substep.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .substep.done{color:var(--accent-dark);border-color:var(--accent)}
+  .substep .n{width:18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;font-size:11px}
+  .substep.active .n{background:rgba(255,255,255,.25);color:#fff}
+  .substep.done .n{background:var(--accent);color:#fff}
+
+  /* gap-fill quiz */
+  .quiz-q{font-size:13px;color:var(--text-2);margin-bottom:14px}
+  .quiz-sentence{font-size:16px;line-height:2;font-weight:600;margin-bottom:16px}
+  .gap{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:32px;padding:0 10px;margin:0 3px;border-radius:8px;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent-dark);font-size:13px;font-weight:700;vertical-align:middle;cursor:pointer}
+  .gap.filled{border-style:solid;background:#fff}
+  .gap.correct{border-color:var(--success);background:var(--success-soft);color:var(--success)}
+  .gap.wrong{border-color:var(--error);background:var(--error-soft);color:var(--error)}
+  .opt-pool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .opt{font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .14s ease}
+  .opt:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .opt.used{opacity:.35;pointer-events:none}
+  .quiz-result{margin-top:14px;padding:13px 15px;border-radius:var(--radius-sm);font-size:13.5px;line-height:1.6}
+  .quiz-result.ok{background:var(--success-soft);color:var(--success)}
+  .quiz-result.diag{background:var(--warn-soft);color:var(--warn)}
+
+  /* sound-linking / liaison training */
+  .sound-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 15px;margin-bottom:12px;background:var(--surface)}
+  .sound-card:last-child{margin-bottom:0}
+  .sound-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+  .sound-written{font-size:15px;font-weight:700}
+  .sound-arrow{color:var(--muted);font-size:15px}
+  .sound-heard{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--accent-dark);background:var(--accent-soft);padding:2px 9px;border-radius:6px}
+  .sound-play{margin-left:auto;display:flex;gap:6px}
+  .mini-play{width:34px;height:34px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--text-2)}
+  .mini-play:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .mini-play.slow{font-size:12px;font-weight:700}
+  .sound-tip{font-size:12.5px;color:var(--text-2);line-height:1.5}
+  .sound-tip b{color:var(--text)}
+  .sound-type{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);background:var(--accent-soft);color:var(--accent-dark);margin-bottom:8px}
+
+  /* accent library */
+  .acc-lib{background:var(--surface-2);border-radius:var(--radius-sm);padding:15px 16px}
+  .acc-feature{font-size:13.5px;line-height:1.7;margin-bottom:8px;display:flex;gap:9px}
+  .acc-feature .em{flex-shrink:0}
+  .acc-feature b{color:var(--text)}
+  .phrase-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+  .phrase{background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px}
+  .phrase .p-en{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .phrase .p-play{width:24px;height:24px;border-radius:6px;background:var(--surface-2);display:grid;place-items:center;font-size:11px;color:var(--text-2);flex-shrink:0}
+  .phrase .p-play:hover{background:var(--primary);color:#fff}
+  .phrase .p-zh{font-size:12px;color:var(--text-2);margin-top:3px}
+
+  /* shadowing */
+  .shadow-line{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 15px;margin-bottom:11px;background:var(--surface)}
+  .shadow-line:last-child{margin:0}
+  .shadow-en{font-size:14.5px;font-weight:600;line-height:1.5;margin-bottom:10px}
+  .shadow-ctrls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .shadow-rec{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:8px 15px;border-radius:var(--radius-pill);background:var(--warn);color:#fff;transition:all .15s ease}
+  .shadow-rec:hover{background:#d4770a}
+  .shadow-rec.recording{background:var(--error);animation:pulse 1.3s ease-in-out infinite}
+  .shadow-score{font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:var(--radius-pill)}
+  .shadow-score.hidden{display:none}
+  .shadow-score.good{background:var(--success-soft);color:var(--success)}
+  .shadow-score.mid{background:var(--warn-soft);color:var(--warn)}
+  .shadow-heard{font-size:12px;color:var(--text-2);margin-top:8px;font-style:italic}
+
+  .decode-tip{background:var(--surface-2);border-radius:var(--radius-sm);padding:11px 13px;margin-top:12px;font-size:13px;color:var(--text-2);display:flex;gap:9px}
+  .decode-tip b{color:var(--text)}
+  .decode-tip .em{font-size:16px;flex-shrink:0}
+  /* per-sentence practice (完全听不懂 path) */
+  .sent-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:11px;background:var(--surface)}
+  .sent-card:last-child{margin:0}
+  .sent-idx{font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);background:var(--primary-soft);color:var(--primary-dark);margin-bottom:7px;display:inline-block}
+  .sent-en{font-size:14.5px;font-weight:600;line-height:1.5;margin-bottom:5px}
+  .sent-zh{font-size:12.5px;color:var(--text-2);margin-bottom:10px;display:none}
+  .sent-zh.show{display:block}
+  .sent-ctrls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .sent-btn{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);transition:all .14s ease}
+  .sent-btn:hover{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
+  .sent-btn.rec{background:var(--warn);color:#fff;border-color:var(--warn)}
+  .sent-btn.rec.recording{background:var(--error);border-color:var(--error);animation:pulse 1.3s ease-in-out infinite}
+  .sent-heard{font-size:12px;color:var(--text-2);margin-top:8px;font-style:italic}
+  /* per-sentence decode (听感拆解 inside each sentence card) */
+  .sent-decode{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;display:none}
+  .sent-decode.show{display:block}
+  .spt{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:8px 0;border-bottom:1px dotted var(--border)}
+  .spt:last-child{border:none}
+  .spt .w{font-size:13px;font-weight:700}
+  .spt .arr{color:var(--muted);font-size:12px}
+  .spt .hd{font-size:12.5px;font-weight:700;font-family:var(--mono);color:var(--accent-dark);background:var(--accent-soft);padding:1px 8px;border-radius:5px}
+  .spt .ty{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:var(--radius-pill);background:var(--surface-2);color:var(--text-2)}
+  .spt .pl{width:26px;height:26px;border-radius:6px;background:var(--surface-2);display:grid;place-items:center;font-size:11px;color:var(--text-2);margin-left:auto}
+  .spt .pl:hover{background:var(--primary);color:#fff}
+  .spt-tip{font-size:12px;color:var(--text-2);line-height:1.5;width:100%;padding-left:2px}
+  .reveal-full{background:#fff;border:1.5px solid var(--success);border-radius:var(--radius-sm);padding:14px 16px;margin-top:6px}
+  .reveal-full .lbl{font-size:11px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+  .reveal-full .full-en{font-size:15px;font-weight:600;line-height:1.6;margin-bottom:8px}
+  .reveal-full .full-zh{font-size:13px;color:var(--text-2)}
+
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,48,37,.4)}50%{box-shadow:0 0 0 8px rgba(217,48,37,0)}}
+
+  /* speak / record */
+  .rec-zone{text-align:center;padding:10px 0}
+  .mic-btn{width:78px;height:78px;border-radius:50%;background:var(--warn);color:#fff;display:grid;place-items:center;font-size:30px;margin:0 auto 12px;transition:all .18s ease;box-shadow:0 5px 16px rgba(232,131,12,.4)}
+  .mic-btn:hover{transform:scale(1.06)}
+  .mic-btn.recording{background:var(--error);animation:pulseBig 1.3s ease-in-out infinite;box-shadow:0 5px 20px rgba(217,48,37,.5)}
+  @keyframes pulseBig{0%,100%{box-shadow:0 5px 20px rgba(217,48,37,.5)}50%{box-shadow:0 5px 34px rgba(217,48,37,.75)}}
+  .rec-hint{font-size:13px;color:var(--text-2);margin-bottom:14px}
+  .playback{display:inline-flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:var(--radius-pill);padding:7px 8px 7px 16px;margin-bottom:12px}
+  .pb-btn{font-size:13px;font-weight:700;color:var(--primary-dark);background:#fff;border:1px solid var(--border);border-radius:var(--radius-pill);padding:7px 14px}
+  .pb-btn:hover{border-color:var(--primary)}
+  .pb-time{font-size:12px;color:var(--text-2);font-family:var(--mono);padding-right:6px}
+  .suggest{background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px 15px;text-align:left;font-size:13.5px;color:var(--primary-dark);margin-top:10px;display:flex;gap:9px}
+  .suggest .em{font-size:15px;flex-shrink:0}
+  .my-answer{background:var(--surface-2);border-radius:var(--radius);padding:14px 16px;margin-top:14px;text-align:left}
+  .my-answer .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+  .my-answer .txt{font-size:14.5px;line-height:1.5}
+  .type-fallback{width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-size:14px;font-family:inherit;resize:vertical;min-height:60px}
+  .type-fallback:focus{outline:none;border-color:var(--primary)}
+
+  /* feedback */
+  .fb-scores{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+  .fb-score{background:var(--surface-2);border-radius:var(--radius);padding:14px 10px;text-align:center}
+  .fb-score .ring{width:56px;height:56px;margin:0 auto 8px;position:relative}
+  .fb-score .num{position:absolute;inset:0;display:grid;place-items:center;font-size:16px;font-weight:800;font-family:var(--mono)}
+  .fb-score .lbl{font-size:11.5px;font-weight:600;color:var(--text-2)}
+  .fb-block{border-radius:var(--radius);padding:15px 17px;margin-bottom:12px}
+  .fb-block h4{font-size:13.5px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .fb-block.pron{background:var(--error-soft)}
+  .fb-block.gram{background:var(--warn-soft)}
+  .fb-block.express{background:var(--primary-soft)}
+  .fb-block.good{background:var(--success-soft)}
+  .fb-item{font-size:13.5px;line-height:1.6;margin-bottom:7px;padding-left:2px}
+  .fb-item:last-child{margin:0}
+  .fb-item .was{color:var(--error);text-decoration:line-through;text-decoration-color:rgba(217,48,37,.5)}
+  .fb-item .now{color:var(--success);font-weight:700}
+  .fb-item .word{font-family:var(--mono);font-weight:700;background:#fff;padding:1px 6px;border-radius:5px;border:1px solid var(--border)}
+
+  .footer-note{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;line-height:1.6}
+  /* ===== Mobile adaptation (≤560px) ===== */
+  @media (max-width: 560px){
+    .app{padding:14px 12px calc(48px + env(safe-area-inset-bottom))}
+    .top{margin-bottom:14px}
+    .brand h1{font-size:16px}
+    .brand p{font-size:11px}
+    .streak{padding:5px 10px;font-size:12px}
+    .section-label{font-size:11px;margin:18px 2px 9px}
+    /* selectors: horizontal scroll rows on phone */
+    .chips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;gap:8px}
+    .chip{flex:0 0 auto;padding:9px 13px;font-size:13.5px}
+    .mchip{flex:0 0 auto}
+    .scenarios{grid-template-columns:1fr 1fr;gap:9px}
+    .scn{padding:13px}
+    .scn h3{font-size:13.5px}
+    .scn p{font-size:11.5px}
+    /* start bar stacks */
+    .startbar{flex-direction:column;align-items:stretch;gap:11px;padding:14px}
+    .startbar .sel{font-size:12.5px;text-align:center}
+    .btn-start{justify-content:center;width:100%;padding:13px}
+    /* session */
+    .turn{padding:15px}
+    .sess-meta{gap:6px}
+    .pill{font-size:11.5px;padding:5px 10px}
+    .avatar{width:40px;height:40px;font-size:19px}
+    /* audio player + waveform */
+    .player{gap:10px;padding:12px 13px}
+    .play-btn{width:46px;height:46px;font-size:18px}
+    .wave{height:32px}
+    .speed-ctrl{flex-direction:column;gap:4px}
+    /* self-check scale: keep 3 across but tighter */
+    .scale{gap:6px}
+    .scale-btn{padding:10px 4px;font-size:12px}
+    .scale-btn .big{font-size:18px}
+    /* feedback: 4 scores -> 2x2 grid on phone */
+    .fb-scores{grid-template-columns:1fr 1fr;gap:9px}
+    /* actions stack full-width, easy to tap */
+    .actions{flex-direction:column;align-items:stretch;gap:9px}
+    .actions button{width:100%;justify-content:center}
+    .btn-primary,.btn-accent,.btn-ghost{padding:13px 18px}
+    /* help sub-steps scroll */
+    .substeps{gap:5px}
+    .substep{padding:7px 10px;font-size:11.5px}
+    /* per-sentence + shadow controls wrap comfortably */
+    .sent-ctrls, .shadow-ctrls{gap:6px}
+    .sent-btn{font-size:11.5px;padding:7px 10px}
+    /* mic + recording zone */
+    .mic-btn{width:70px;height:70px;font-size:27px}
+    .type-fallback{font-size:15px}   /* ≥16px avoids iOS zoom; 15 acceptable */
+  }
+  /* larger phones / small tablets */
+  @media (min-width: 561px) and (max-width: 780px){
+    .scenarios{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="top">
+    <div class="brand">
+      <div class="logo">🎧</div>
+      <div>
+        <h1>BizEnglish Coach</h1>
+        <p>SAP SuccessFactors 实施 · 商务英语听说训练</p>
+      </div>
+    </div>
+    <div class="streak"><span class="fire">🔥</span> 连续 5 天</div>
+  </div>
+
+  <!-- ============ SETUP VIEW ============ -->
+  <div id="setup">
+    <div class="section-label">① 选择客户口音</div>
+    <div class="chips" id="accentChips"></div>
+    <div id="accentNote" style="font-size:12px;color:var(--text-2);margin:9px 4px 0;line-height:1.5"></div>
+
+    <div class="section-label">② 选择 SAP SF 模块</div>
+    <div class="chips" id="moduleChips"></div>
+
+    <div class="section-label">③ 选择商务沟通场景</div>
+    <div class="scenarios" id="scnGrid"></div>
+
+    <div class="startbar">
+      <div class="sel">
+        练习设置：<b id="selAccent">印度口音</b> × <b id="selModule">Employee Central</b> × <b id="selScn">需求澄清会议</b>
+      </div>
+      <button class="btn-start" id="startBtn">开始训练 <span>→</span></button>
+    </div>
+
+    <div class="footer-note">
+      💡 训练闭环：<b>听</b>客户发言 → <b>自测</b>听懂多少 → <b>帮你听懂</b>（定位卡点→听感拆解→影子跟读→完整原文）→ 口语<b>回应</b> → <b>纠正反馈</b><br>
+      这是一个交互原型 Demo，用于验证学习流程与产品形态。
+    </div>
+  </div>
+
+  <!-- ============ SESSION VIEW ============ -->
+  <div id="session" class="hidden">
+    <div class="sess-head">
+      <div class="sess-meta">
+        <span class="pill" id="sPillAccent">🇮🇳 印度口音</span>
+        <span class="pill" id="sPillModule">🧩 EC</span>
+        <span class="pill" id="sPillScn">📋 需求澄清会议</span>
+        <span class="pill">回合 <b id="sTurnNum">1</b> / 3</span>
+      </div>
+      <button class="btn-exit" id="exitBtn">← 退出</button>
+    </div>
+
+    <div class="steps" id="stepBar">
+      <div class="step now"></div><div class="step"></div>
+      <div class="step"></div><div class="step"></div>
+    </div>
+
+    <div class="card">
+      <div class="turn" id="turnArea"></div>
+    </div>
+  </div>
+
+  <div class="footer-note" id="globalFoot" style="display:none"></div>
+</div>
+
+<script>
+// Global guard: swallow benign runtime errors (e.g. sandboxed speech/mic APIs) so the app keeps rendering.
+window.addEventListener('error', function(ev){
+  try{ console.warn('[BizEnglishCoach] caught:', ev.message); }catch(e){}
+  ev.preventDefault && ev.preventDefault();
+  return true;
+});
+window.addEventListener('unhandledrejection', function(ev){
+  try{ console.warn('[BizEnglishCoach] rejection:', ev.reason); }catch(e){}
+  ev.preventDefault && ev.preventDefault();
+});
+
+// Register service worker for offline/PWA — only works over http(s), silently skipped on file://
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed (ok on file://):', e); });
+  });
+}
+
+// ============ DATA ============
+const ACCENTS = [
+  {id:'in', flag:'🇮🇳', name:'印度口音',   diff:'较难', hard:true,  voiceHint:['hi-IN','en-IN']},
+  {id:'au', flag:'🇦🇺', name:'澳洲口音',   diff:'中等', hard:false, voiceHint:['en-AU']},
+  {id:'us', flag:'🇺🇸', name:'美式口音',   diff:'基础', hard:false, voiceHint:['en-US']},
+  {id:'gb', flag:'🇬🇧', name:'英式口音',   diff:'中等', hard:false, voiceHint:['en-GB']},
+  {id:'sea',flag:'🌏',  name:'东南亚口音', diff:'较难', hard:true,  voiceHint:['en-SG','en-IN']},
+  {id:'latam',flag:'🌎',name:'拉美口音',   diff:'较难', hard:true,  voiceHint:['es-MX','es-US','en-US']},
+];
+
+const SCENARIOS = [
+  {id:'req',   ic:'📋', name:'需求澄清会议', desc:'客户描述 HR 业务与系统功能需求，你需听懂并澄清', ready:true},
+  {id:'demo',  ic:'🖥️', name:'系统 Demo 演示', desc:'向客户演示 SF 模块功能，回应现场提问', ready:true},
+  {id:'issue', ic:'🛠️', name:'上线问题排查', desc:'客户反馈系统问题，你需理解症状并回应方案', ready:true},
+  {id:'status',ic:'📊', name:'项目状态汇报', desc:'与客户对齐项目进度、风险与下一步', ready:true},
+  {id:'train', ic:'🎓', name:'客户 HR 培训', desc:'为客户 HR 团队讲解操作，回应学员疑问', ready:true},
+];
+
+const MODULES = [
+  {id:'ec',   ab:'EC',   name:'Employee Central', zh:'核心人事 / 组织主数据', ready:true},
+  {id:'pmgm', ab:'PMGM', name:'Performance & Goals', zh:'绩效与目标管理', ready:true},
+  {id:'comp', ab:'Comp', name:'Compensation', zh:'薪酬管理', ready:true},
+  {id:'rcm',  ab:'RCM',  name:'Recruiting', zh:'招聘管理', ready:true},
+  {id:'lms',  ab:'LMS',  name:'Learning', zh:'学习管理', ready:false},
+];
+
+
+// India accent characteristics + high-frequency expressions (for the accent library sub-step)
+const ACCENT_LIB = {
+  in: {
+    flag:'🇮🇳', name:'印度口音',
+    features:[
+      {em:'🌀', t:"<b>卷舌音 /t/ /d/</b>：舌尖后卷，'time' 听起来更'硬'、更靠后，接近 /ʈaɪm/。"},
+      {em:'🎵', t:"<b>音节节奏均匀</b>：每个音节都读得较清楚、时长接近，不像美音那样弱读、吞音——所以语速显得快。"},
+      {em:'📍', t:"<b>重音位置常不同</b>：'deVElop' 可能读成 'DEvelop'，多音节词要靠上下文猜。"},
+      {em:'🔤', t:"<b>/w/ 与 /v/ 常混</b>：'we' 可能听起来像 've'，'requirement' 里的 /w/ 也偏 /v/。"},
+      {em:'〰️', t:"<b>句尾常上扬</b>：陈述句听起来像疑问句，别被语调误导。"}
+    ],
+    phrases:[
+      {en:"do the needful", zh:"请照此办理 / 请处理（印度英语极高频，= please handle it）"},
+      {en:"revert back", zh:"回复（= reply / get back，冗余但常用）"},
+      {en:"prepone", zh:"提前（postpone 的反义，印度英语独有）"},
+      {en:"kindly", zh:"劳驾/请（比 please 更常用，语气正式）"},
+      {en:"same same", zh:"一样的（口语强调）"},
+      {en:"what is your good name?", zh:"请问您贵姓？（礼貌问名字）"}
+    ]
+  }
+};
+
+// The scripted sample dialogue: Indian accent × Requirements clarification (SAP SF)
+// Each turn now carries: quiz (gap-fill), sounds (liaison/reduction), shadow (lines), plus the original decode/tip/suggest/model.
+const SCRIPTS = {};
+SCRIPTS['ec_req'] = [
+  {
+    speaker:{nm:'Priya Sharma', rl:'客户 HR 总监 · 印度', av:'👩🏽💼'},
+    en:"So, just to align on the requirement — for the new appraisal cycle, we want the goals to cascade down from the department heads, and the ratings should be calibrated across the business units before they're finalised. Can SuccessFactors handle this kind of top-down goal alignment?",
+    zh:"那么，先对齐一下需求——对于新的绩效考核周期，我们希望目标能从部门负责人自上而下地层层分解，而且评分在最终确定前需要在各业务单元之间做校准。SuccessFactors 能支持这种自上而下的目标对齐吗？",
+    sentences:[
+      {en:"So, just to align on the requirement — for the new appraisal cycle,", zh:"那么，先对齐一下需求——对于新的绩效考核周期，", points:[
+        {w:"just to align", heard:"jəs-tə-lain", type:"连读+弱读", tip:"'just to' 里 just 的 -t 与 to 连读弱化成 /dʒəstə/，to 弱读成 /tə/。"},
+        {w:"appraisal cycle", heard:"ə-PREI-zl-SAI-kl", type:"重音", tip:"appraisal 重音在第二音节 /əˈpreɪzl/；cycle 尾音 -le 成 /kl/。绩效考核周期。"}
+      ]},
+      {en:"we want the goals to cascade down from the department heads,", zh:"我们希望目标能从部门负责人自上而下地层层分解，", points:[
+        {w:"want the", heard:"won-thə", type:"吞音", tip:"want 的 -t 几乎不发音，与 the 连读成 /wɒnðə/。"},
+        {w:"cascade down", heard:"kə-SKEID-daun", type:"重音+连读", tip:"cascade 重音在后 /kæˈskeɪd/，与 down 连读。别听成 'cast it down'。"}
+      ]},
+      {en:"and the ratings should be calibrated across the business units before they're finalised.", zh:"而且评分在最终确定前需要在各业务单元之间做校准。", points:[
+        {w:"should be", heard:"shd-bi", type:"弱读", tip:"should 弱读成 /ʃd/，元音几乎消失。"},
+        {w:"calibrated", heard:"KAL-i-brei-tid", type:"重音", tip:"重音在第一音节，别混 celebrated。校准。"},
+        {w:"across the", heard:"ə-KROS-thə", type:"连读", tip:"across 与 the 连读，the 弱读 /ðə/。"}
+      ]},
+      {en:"Can SuccessFactors handle this kind of top-down goal alignment?", zh:"SuccessFactors 能支持这种自上而下的目标对齐吗？", points:[
+        {w:"kind of", heard:"kain-də", type:"连读", tip:"'kind of' 连读成 /kaɪndə/，非常高频。"},
+        {w:"top-down alignment", heard:"top-daun-ə-LAIN-mnt", type:"重音", tip:"alignment 重音在第二音节 /əˈlaɪnmənt/。这是客户的核心提问点。"}
+      ]}
+    ],
+    byAccent:{
+      us:{
+        globalTip:"美式口音策略：大量弱读与连读，功能词几乎吞掉。抓重读的实义词（goals / cascade / calibrated / units），弱读的 to/the/should 靠语感补全。",
+        sounds:[
+          {written:"goals to cascade down", heard:"goʊlz-də-kæ-SKEID-daun", type:"弱读+连读", tip:"美音 'to' 弱读成 /də/（几乎听不到 t）。cascade 重音仍在后。"},
+          {written:"should be calibrated", heard:"shəd-bi-KAL-ə-brei-ɾid", type:"闪音", tip:"美音 calibrated 的 -t- 变成闪音 /ɾ/（像轻 d）：/ˈkæləbreɪɾɪd/。"},
+          {written:"across the business units", heard:"əkros-thə-BIZ-nəs-YU-nɪts", type:"连读", tip:"across the 连读；business 两音节。美音节奏更松、重音更突出。"}
+        ],
+        pts:{
+          1:[{w:"cascade down", heard:"kə-SKEID-daun", type:"连读", tip:"美音里 'to cascade' 的 to 弱读，cascade 重音在后，连成一串。"}],
+          2:[{w:"calibrated", heard:"KAL-ə-brei-ɾid", type:"闪音", tip:"-t- 闪音化成 /ɾ/，听起来像 'calibraded'。美音典型。"}]
+        }
+      },
+      gb:{
+        globalTip:"英式口音策略：/t/ 发得清脆（不闪音），非重读元音更中性（schwa 多）。数据类词 data 读 /ˈdɑːtə/。抓清晰的 /t/ 和实义词。",
+        sounds:[
+          {written:"goals to cascade down", heard:"gəʊlz-tə-kæ-SKEID-daʊn", type:"弱读", tip:"英音 'to' 弱读 /tə/ 但 t 清晰。goals 元音 /əʊ/ 偏圆。"},
+          {written:"should be calibrated", heard:"ʃəd-bi-KAL-ɪ-brei-tɪd", type:"清脆t", tip:"英音 calibrated 的 -t- 清晰发出 /t/（不像美音闪音）。"},
+          {written:"across the business units", heard:"əˈkrɒs-ðə-BIZ-nɪs-JUː-nɪts", type:"连读", tip:"across 元音 /ɒ/ 短而圆（英音特征）。"}
+        ],
+        pts:{
+          1:[{w:"cascade down", heard:"kæ-SKEID-daʊn", type:"元音", tip:"英音 down 的 /aʊ/ 更饱满；t/d 清晰。"}],
+          2:[{w:"calibrated", heard:"KAL-ɪ-brei-tɪd", type:"清脆t", tip:"英音 -t- 清晰，不闪音。"}]
+        }
+      },
+      au:{
+        globalTip:"澳洲口音策略：元音大幅偏移是最大难点——/eɪ/ 听起来像 /aɪ/（day→die）、/aɪ/ 更靠后。词尾常上扬。抓实义词，别被元音带偏。",
+        sounds:[
+          {written:"goals to cascade down", heard:"gəʊlz-tə-kə-SKAID-daun", type:"元音偏移", tip:"澳音 cascade 的 /eɪ/ 偏向 /aɪ/，听起来像 'cascide'。"},
+          {written:"should be calibrated", heard:"shəd-bi-KAL-ə-braɪ-tɪd", type:"元音偏移", tip:"澳音 -brated 的 /eɪ/ 偏 /aɪ/，像 'calibrited'。易懵。"},
+          {written:"across the business units", heard:"əkrɒs-thə-BIZ-nəs-JUː-nɪts", type:"连读", tip:"澳音元音整体偏前、偏紧。"}
+        ],
+        pts:{
+          1:[{w:"cascade down", heard:"kə-SKAID-daun", type:"元音偏移", tip:"澳音 /eɪ/→/aɪ/：cascade 听起来像 'cascide'。这是澳音最大的坑。"}],
+          2:[{w:"calibrated", heard:"KAL-ə-braɪ-tɪd", type:"元音偏移", tip:"-brated → -brited 听感。抓词根 calibr- 别管元音。"}]
+        }
+      }
+    },
+    // --- SUB-STEP 1: gap-fill quiz (locate where you got stuck) ---
+    quiz:{
+      q:"先不看原文。听 1-2 遍，把下面听到的关键词拖/点进空格，看看你卡在哪：",
+      // template with {0},{1},{2} placeholders
+      template:"we want the goals to {0} from the department heads, and the ratings should be {1} across the {2}",
+      blanks:["cascade down","calibrated","business units"],
+      // distractors + answers, shuffled at render
+      pool:["cascade down","calibrated","business units","cast it down","celebrated","business needs"],
+      diagnose:"你大概率卡在这几处：<b>cascade down</b>（印度口音重音在后，易听成 'cast it down'）、<b>calibrated</b>（元音短促，易混 'celebrated'）。下一步我们逐个攻破发音。"
+    },
+    // --- SUB-STEP 2: sound linking / reduction ---
+    sounds:[
+      {written:"cascade down", heard:"kə-SKEID-daun", type:"重音+连读", tip:"<b>cascade</b> 重音在第二音节 /kæˈskeɪd/，印度口音把 'cascade down' 连成一串，听起来像一个词。抓 <b>-skeid-daun</b> 这个降调。"},
+      {written:"should be calibrated", heard:"shd-bi-KAL-i-bre-tid", type:"弱读+吞音", tip:"'should be' 里 should 弱读成 /ʃd/，几乎听不到元音。<b>calibrated</b> 重音在第一音节，别读成 celebrated。"},
+      {written:"across the business units", heard:"ə-KROS-thə-BIZ-nis-yu-nits", type:"连读", tip:"'across the' 连读，the 弱读成 /ðə/。business 实际只有两个音节 /ˈbɪz.nɪs/，中间的 -i- 被吞掉。"}
+    ],
+    // --- SUB-STEP 4: shadowing lines ---
+    shadow:[
+      "we want the goals to cascade down",
+      "the ratings should be calibrated",
+      "across the business units"
+    ],
+    globalTip:"印度口音策略：抓关键名词（cascade / calibrate / alignment），先听懂'客户在问什么'，弱读和连读的地方可回放慢速。",
+    suggest:"回应结构建议：先确认能做（Yes, SuccessFactors supports…）→ 点出对应功能（Goal Management 的 cascading + Calibration 模块）→ 反问澄清一个细节（校准是按 BU 还是全公司？）。",
+    modelAnswer:"Yes, absolutely. SuccessFactors supports top-down goal cascading through the Goal Management module — department heads can set goals that flow down to their teams. And for ratings, we'd configure Calibration sessions so business units are aligned before finalising. Quick question: do you want calibration at the business-unit level, or company-wide?"
+  },
+  {
+    speaker:{nm:'Rajesh Kumar', rl:'客户 IT 负责人 · 印度', av:'👨🏽💻'},
+    en:"Right, that makes sense. But one concern from our side — we have around fifteen thousand employees across seven legal entities. Will the calibration performance hold up at that scale? And also, can we restrict who sees the calibration data based on role-based permissions?",
+    zh:"好的，这说得通。但我们这边有个顾虑——我们大约有一万五千名员工，分布在七个法人实体里。在这种规模下，校准的性能扛得住吗？另外，我们能不能基于角色权限来限制谁可以看到校准数据？",
+    sentences:[
+      {en:"Right, that makes sense. But one concern from our side —", zh:"好的，这说得通。但我们这边有个顾虑——", points:[
+        {w:"that makes sense", heard:"thət-meiks-sens", type:"弱读", tip:"that 弱读 /ðət/，makes sense 是固定搭配 = 说得通/有道理。"},
+        {w:"from our side", heard:"frəm-aʊə-said", type:"连读", tip:"from our 连读 /frəmaʊə/。= 从我们这边（表达立场）。"}
+      ]},
+      {en:"we have around fifteen thousand employees across seven legal entities.", zh:"我们大约有一万五千名员工，分布在七个法人实体里。", points:[
+        {w:"fifteen thousand", heard:"fif-TEEN-thau-znd", type:"重音+数字", tip:"fifteen 重音在后（区别 fifty 重音在前）。关键数字 15,000，务必抓准。"},
+        {w:"legal entities", heard:"LEE-gl-EN-ti-tiz", type:"卷舌+吞音", tip:"legal 长音 /iː/；entities 尾音轻。别听成 legal identities。法人实体。"}
+      ]},
+      {en:"Will the calibration performance hold up at that scale?", zh:"在这种规模下，校准的性能扛得住吗？", points:[
+        {w:"hold up", heard:"hoal-dʌp", type:"连读", tip:"hold 的 -d 与 up 连读成 /hoʊldʌp/，易混 'hold on'。= 撑得住/扛得住。"},
+        {w:"at that scale", heard:"ət-thət-skeil", type:"弱读", tip:"at、that 都弱读。抓 scale（规模）就能推断整句。"}
+      ]},
+      {en:"And also, can we restrict who sees the calibration data based on role-based permissions?", zh:"另外，我们能不能基于角色权限来限制谁可以看到校准数据？", points:[
+        {w:"based on", heard:"beis-tɒn", type:"连读", tip:"based on 连读 /beɪstɒn/。= 基于。"},
+        {w:"role-based permissions", heard:"ROAL-beist-pər-MISH-nz", type:"重音", tip:"复合词重音在 role；permissions 重音在第二音节，尾音弱。别听成 rule-based。"}
+      ]}
+    ],
+    byAccent:{
+      us:{
+        globalTip:"美式：数字与实义词重读清楚，功能词吞得厉害。'hold up' 连成 /hoʊldʌp/，'at that' 几乎黏成一团。抓 fifteen thousand / legal entities / hold up / permissions。",
+        sounds:[
+          {written:"fifteen thousand employees", heard:"fɪf-TEEN-THAU-zn-əm-PLOI-iz", type:"数字", tip:"美音 fifteen 重音在后（区别 fifty 重音在前）。数字要抓准。"},
+          {written:"hold up at that scale", heard:"hoʊl-DʌP-ə-ðæt-skeɪl", type:"连读+闪音", tip:"美音 hold up 连成 /hoʊldʌp/；'at that' 的 t 闪音化，黏成一团。"},
+          {written:"role-based permissions", heard:"roʊl-beɪst-pər-MISH-ənz", type:"重音", tip:"复合词重音在 role。美音 permissions 尾音清楚。"}
+        ],
+        pts:{
+          1:[{w:"legal entities", heard:"LEE-gl-EN-ə-ɾiz", type:"闪音", tip:"美音 entities 的 -t- 闪音化 /ˈenəɾiz/。抓 LEE-gl 区分 legal/illegal。"}],
+          2:[{w:"hold up", heard:"hoʊl-DʌP", type:"连读", tip:"美音连成一个词 /hoʊldʌp/，比印度口音更黏。听后面 'at that scale' 辅助判断。"}]
+        }
+      },
+      gb:{
+        globalTip:"英式：/t/ 清脆，元音中性。'hold up' 的 d、t 都清晰。数字 fifteen 的 -teen 发得足。抓清晰辅音。",
+        sounds:[
+          {written:"fifteen thousand employees", heard:"fɪf-TIːN-THAU-znd-ɪm-PLOI-iːz", type:"数字", tip:"英音 -teen 元音 /iː/ 拉足，和 fifty 区别明显。"},
+          {written:"hold up at that scale", heard:"həʊld-ʌp-ət-ðæt-skeɪl", type:"清脆t", tip:"英音 hold up 的 d、t 清晰分开，不像美音黏成团。"},
+          {written:"role-based permissions", heard:"rəʊl-beɪst-pəˈmɪʃ-ənz", type:"重音", tip:"英音 role 元音 /əʊ/ 圆；permissions 重音在第二音节。"}
+        ],
+        pts:{
+          1:[{w:"legal entities", heard:"LEE-gəl-EN-tɪ-tiz", type:"清脆t", tip:"英音 entities 的 -t- 清晰发出，不闪音。"}],
+          2:[{w:"hold up", heard:"həʊld-ʌp", type:"清脆", tip:"英音 hold 与 up 之间 d 清晰，较易分辨（对比美音黏连）。"}]
+        }
+      },
+      au:{
+        globalTip:"澳洲：元音偏移最坑。'scale' 的 /eɪ/→/aɪ/（像 'skile'）、'employees' 的元音靠前。词尾上扬像疑问。抓实义词的辅音骨架。",
+        sounds:[
+          {written:"fifteen thousand employees", heard:"fɪf-TIːN-THAU-znd-əm-PLOI-eez", type:"元音", tip:"澳音 employees 尾音 /iːz/ 偏紧、上扬。"},
+          {written:"hold up at that scale", heard:"həʊld-ʌp-ət-ðæt-skaɪl", type:"元音偏移", tip:"澳音 scale 的 /eɪ/→/aɪ/，听起来像 'skile'。典型澳音坑。"},
+          {written:"role-based permissions", heard:"rəʊl-baɪst-pəˈmɪʃ-ənz", type:"元音偏移", tip:"澳音 based 的 /eɪ/→/aɪ/，像 'bised'。"}
+        ],
+        pts:{
+          1:[{w:"legal entities", heard:"LEE-gəl-EN-tə-taɪz", type:"元音偏移", tip:"澳音 entities 尾音 /aɪz/ 偏移，别听成别的词。抓 LEE-gl。"}],
+          2:[{w:"hold up", heard:"həʊld-ap", type:"元音", tip:"澳音 up 的 /ʌ/ 偏前。抓 'at that scale' 辅助。"}]
+        }
+      }
+    },
+    quiz:{
+      q:"听这一段（信息密度更高），把关键词填进空格：",
+      template:"we have around fifteen thousand employees across seven {0}. Will the calibration performance {1} at that scale? Can we restrict who sees the data based on {2}?",
+      blanks:["legal entities","hold up","role-based permissions"],
+      pool:["legal entities","hold up","role-based permissions","legal identities","hold on","rule-based permissions"],
+      diagnose:"高频卡点：<b>hold up</b>（连读成 hoal-dʌp，易听成 'hold on'）、<b>legal entities</b>（易听成 legal identities）。数字 15,000 / 7 是需求约束，务必抓准。"
+    },
+    sounds:[
+      {written:"across seven legal entities", heard:"ə-KROS-sevn-LEE-gl-EN-ti-tiz", type:"连读+卷舌", tip:"'legal entities' 里 -t- 卷舌，entities 尾音轻。抓 <b>LEE-gl</b>（长音 /iː/）区分 legal / illegal。"},
+      {written:"hold up at that scale", heard:"hoal-DUP-ət-thət-SKEIL", type:"连读", tip:"<b>hold up</b> 的 d 与 up 连读成 /doʊl-dʌp/，容易和 'hold on' 混。听不清时抓后面 'at that scale'（在那个规模下）就能推断意思。"},
+      {written:"role-based permissions", heard:"ROAL-beist-pər-MISH-nz", type:"重音", tip:"复合词重音在 <b>role</b>。permissions 重音在第二音节 /pərˈmɪʃ.nz/，尾音弱读成 /nz/。别听成 'rule-based'。"}
+    ],
+    shadow:[
+      "across seven legal entities",
+      "will it hold up at that scale",
+      "based on role-based permissions"
+    ],
+    globalTip:"这一段信息密度高：含【数字规模】+【两个问题】。技巧：边听边在脑子里记'两个问号'——性能？权限？先抓'他问了几件事'，数字可回放。",
+    suggest:"回应结构建议：分点回应两个问题。① 性能：SF 是云端、这种规模没问题（可提 calibration session 分批）② 权限：用 RBP 精确控制可见范围。最后确认理解无误。",
+    modelAnswer:"Good questions. On performance — SuccessFactors is cloud-based and handles fifteen thousand employees comfortably; we'd typically split calibration into sessions per business unit to keep it smooth. On visibility — yes, we use Role-Based Permissions to control exactly who can view or edit calibration data, so a manager only sees their own org. Does that address both concerns?"
+  },
+  {
+    speaker:{nm:'Priya Sharma', rl:'客户 HR 总监 · 印度', av:'👩🏽💼'},
+    en:"Perfect. Last thing before we wrap up — could you put together a high-level solution document by end of next week, and maybe walk us through it in the next steering committee? We need to get a sign-off from the leadership before we move to the build phase.",
+    zh:"太好了。收尾前最后一件事——你能不能在下周末之前整理一份高层方案文档，然后在下次指导委员会会议上给我们讲一遍？我们需要在进入构建阶段前拿到领导层的签字批准。",
+    sentences:[
+      {en:"Perfect. Last thing before we wrap up —", zh:"太好了。收尾前最后一件事——", points:[
+        {w:"wrap up", heard:"ræ-pʌp", type:"连读", tip:"wrap 的 -p 与 up 连读成 /ræpʌp/。= 收尾/结束。"}
+      ]},
+      {en:"could you put together a high-level solution document by end of next week,", zh:"你能不能在下周末之前整理一份高层方案文档，", points:[
+        {w:"could you", heard:"kʊ-dʒə", type:"连读", tip:"could you 连读成 /kʊdʒə/，d+y 融合成 /dʒ/。"},
+        {w:"put together", heard:"pu-tə-GE-thər", type:"连读", tip:"put together 连成一串。= 整理/编制（比 make 地道）。"},
+        {w:"by end of next week", heard:"bai-EN-dəv-neks-WEEK", type:"连读", tip:"'end of' 连读 /endəv/；next 的 -t 几乎不发音。关键：week 不是 weekend！"}
+      ]},
+      {en:"and maybe walk us through it in the next steering committee?", zh:"然后在下次指导委员会会议上给我们讲一遍？", points:[
+        {w:"walk us through it", heard:"wɔ-kəs-thru-it", type:"连读", tip:"walk us、through it 都连读。walk through = 逐步讲解/带着过一遍。"},
+        {w:"steering committee", heard:"STIR-ing-kə-MI-ti", type:"重音", tip:"steering 重音在前；committee 重音在中 /kəˈmɪti/。指导委员会。"}
+      ]},
+      {en:"We need to get a sign-off from the leadership before we move to the build phase.", zh:"我们需要在进入构建阶段前拿到领导层的签字批准。", points:[
+        {w:"need to get a", heard:"nee-tə-ge-tə", type:"连读+弱读", tip:"need to → /niːtə/，get a → /ɡetə/。一连串弱读。"},
+        {w:"sign-off", heard:"SAIN-ɒf", type:"重音", tip:"重音在 sign。= 签字批准（名词）。听懂这个=听懂客户的真实诉求。"}
+      ]}
+    ],
+    byAccent:{
+      us:{
+        globalTip:"美式：'could you' 连成 /kʊdʒə/，'put together' 的 t 闪音，'next week' 的 t 几乎消失。抓实义词：document / next week / committee / sign-off。注意 week 不是 weekend！",
+        sounds:[
+          {written:"could you put together", heard:"kʊ-dʒə-pʊ-ɾə-ge-thər", type:"闪音+连读", tip:"美音 put together 的 -t- 闪音化 /pʊɾəˈgeðər/，黏成一串。"},
+          {written:"by end of next week", heard:"baɪ-EN-də-neks-WIːK", type:"连读", tip:"美音 'end of' 连读 /ɛndə/；next 的 t 几乎不发。关键：week 不是 weekend！"},
+          {written:"steering committee", heard:"STIR-ɪng-kə-MI-ɾi", type:"闪音", tip:"美音 committee 的 -tt- 闪音 /kəˈmɪɾi/。"}
+        ],
+        pts:{
+          1:[{w:"put together", heard:"pʊ-ɾə-ge-thər", type:"闪音", tip:"美音 -t- 闪音，听起来像 'pudergether'。"}],
+          2:[{w:"steering committee", heard:"STIR-ɪng-kə-MI-ɾi", type:"闪音", tip:"committee 的 tt 闪音化。"}]
+        }
+      },
+      gb:{
+        globalTip:"英式：/t/ 清脆分明，'committee' 的 tt 清晰。'schedule' 读 /ˈʃedjuːl/。抓清楚的辅音，功能词弱读但可辨。",
+        sounds:[
+          {written:"could you put together", heard:"kʊd-ju-pʊt-tə-ge-ðə", type:"清脆t", tip:"英音 could you 的 t 较清晰；put together 的 t 清脆分明（非闪音）。"},
+          {written:"by end of next week", heard:"baɪ-end-əv-nekst-WIːK", type:"清脆", tip:"英音 next 的 -t 发得出；week 元音 /iː/ 足。"},
+          {written:"steering committee", heard:"STIɜː-rɪŋ-kə-MI-ti", type:"清脆t", tip:"英音 committee 的 tt 清晰 /kəˈmɪti/。"}
+        ],
+        pts:{
+          1:[{w:"put together", heard:"pʊt-tə-ge-ðə", type:"清脆t", tip:"英音 t 清晰分开，比美音好辨认。"}],
+          2:[{w:"steering committee", heard:"STIɜː-rɪŋ-kə-MI-ti", type:"清脆t", tip:"committee 的 t 清脆。"}]
+        }
+      },
+      au:{
+        globalTip:"澳洲：元音偏移 + 词尾上扬。'week' 的 /iː/ 偏紧、'phase' 的 /eɪ/→/aɪ/。陈述句常像疑问句，别被语调误导。抓实义词。",
+        sounds:[
+          {written:"could you put together", heard:"kʊ-dʒə-pʊt-tə-ge-ðə", type:"连读", tip:"澳音 could you 也连成 /kʊdʒə/；节奏偏快、上扬。"},
+          {written:"by end of next week", heard:"baɪ-end-əv-neks-WɪːK", type:"元音", tip:"澳音 week 的 /iː/ 偏紧偏前。抓 week（不是 weekend）。"},
+          {written:"before the build phase", heard:"bɪ-fɔː-ðə-bɪld-FAɪZ", type:"元音偏移", tip:"澳音 phase 的 /eɪ/→/aɪ/，听起来像 'fize'。"}
+        ],
+        pts:{
+          1:[{w:"put together", heard:"pʊt-tə-ge-ðə", type:"连读", tip:"澳音连读，节奏快，词尾可能上扬。"}],
+          2:[{w:"steering committee", heard:"STIɜː-rɪŋ-kə-MI-ti", type:"重音", tip:"committee 重音在中。澳音元音偏前。"}]
+        }
+      }
+    },
+    quiz:{
+      q:"这一段是客户在给你派活+定deadline。听并填空：",
+      template:"could you {0} a high-level solution document by {1}, and walk us through it in the next {2}?",
+      blanks:["put together","end of next week","steering committee"],
+      pool:["put together","end of next week","steering committee","put down","end of next weekend","steering community"],
+      diagnose:"卡点：<b>put together</b>（连读 pu-tuh-geh-thuh）、<b>steering committee</b>（committee 重音在中间 /kəˈmɪt.i/）。deadline 'end of next week' 要抓准——是 week 不是 weekend。"
+    },
+    sounds:[
+      {written:"could you put together", heard:"kd-yə-pu-tə-GE-thər", type:"连读+弱读", tip:"'could you' 连读成 /kʊdʒə/，put together 连成一串。<b>put together</b> = 整理/编制，比 make 地道。"},
+      {written:"by end of next week", heard:"bai-END-əv-neks-WEEK", type:"连读", tip:"'end of' 连读 /ˈen.dəv/，'next week' 里 next 的 -t 几乎不发音。<b>关键：week 不是 weekend</b>——deadline 差 2 天！"},
+      {written:"the next steering committee", heard:"thə-neks-STIR-ing-kə-MI-ti", type:"重音", tip:"<b>steering</b> /ˈstɪər.ɪŋ/ 重音在前；<b>committee</b> /kəˈmɪt.i/ 重音在中。指导委员会——项目治理关键会议。"}
+    ],
+    shadow:[
+      "could you put together a solution document",
+      "by end of next week",
+      "walk us through it in the steering committee"
+    ],
+    globalTip:"这一段是'行动请求'：客户派任务+定deadline。听力重点从'理解概念'转向'抓待办+时间点'：文档 / 下周末 / 指导委员会 / 签字。",
+    suggest:"回应结构建议：接受任务 + 复述关键点确认（confirming back，显专业）→ 给出具体可交付时间 → 主动补一个细节（要不要附实施时间表？）。",
+    modelAnswer:"Absolutely. So to confirm — I'll prepare a high-level solution document by end of next week and walk the steering committee through it to get leadership sign-off before the build phase. I'll also include a proposed implementation timeline. Would you like me to share a draft with you a couple of days early for review?"
+  }
+];
+
+SCRIPTS['ec_demo'] = [
+  {
+    speaker:{nm:'Ananya Reddy', rl:'客户 HR 业务负责人 · 印度', av:'👩🏽💼'},
+    en:"Thanks for setting this up. So on this screen you're showing the goal library — but what I really want to see is, how does an employee actually, you know, request a change to their goal midway through the cycle? Does that trigger any approval workflow?",
+    zh:"谢谢你安排这次演示。你现在展示的是目标库这个界面——但我真正想看的是，员工在考核周期进行到一半时，要怎么申请修改自己的目标？这会触发什么审批流程吗？",
+    sentences:[
+      {en:"Thanks for setting this up.", zh:"谢谢你安排这次演示。", points:[
+        {w:"setting this up", heard:"se-ting-thi-sʌp", type:"连读", tip:"'this up' 连读成 /ðɪsʌp/。set up = 安排/搭建。"}
+      ]},
+      {en:"So on this screen you're showing the goal library —", zh:"你现在展示的是目标库这个界面——", points:[
+        {w:"you're showing", heard:"yər-SHOW-ing", type:"弱读", tip:"you're 弱读成 /jər/。goal library = 目标库（SF 功能）。"}
+      ]},
+      {en:"how does an employee actually request a change to their goal midway through the cycle?", zh:"员工在周期进行到一半时要怎么申请修改自己的目标？", points:[
+        {w:"does an employee", heard:"dʌ-zən-em-PLOI-i", type:"连读", tip:"'does an' 连读 /dʌzən/。抓 employee（重音在后）。"},
+        {w:"midway through the cycle", heard:"mid-wei-thru-thə-SAI-kl", type:"连读", tip:"midway through = 进行到一半。through the 连读。"}
+      ]},
+      {en:"Does that trigger any approval workflow?", zh:"这会触发什么审批流程吗？", points:[
+        {w:"trigger any approval", heard:"TRI-gər-e-ni-ə-PRU-vl", type:"连读+重音", tip:"approval workflow = 审批流程（SF 核心概念）。这是客户的真实问题点。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（Demo 现场提问），把关键词填进空格：",
+      template:"how does an employee request a {0} to their goal {1} the cycle? Does that trigger any {2}?",
+      blanks:["change","midway through","approval workflow"],
+      pool:["change","midway through","approval workflow","charge","midway to","approval workload"],
+      diagnose:"卡点：<b>midway through</b>（连读，易漏 through）、<b>approval workflow</b>（workflow 尾音弱）。客户在问『周期中途改目标+审批』，抓住这个才能演示对点。"
+    },
+    sounds:[
+      {written:"request a change", heard:"ri-KWES-tə-cheinj", type:"连读", tip:"request a 连读 /rɪˈkwestə/。= 申请修改。"},
+      {written:"midway through the cycle", heard:"mid-wei-thru-thə-SAI-kl", type:"连读", tip:"through the 连读，the 弱读 /ðə/。= 周期进行到一半。"},
+      {written:"trigger an approval workflow", heard:"TRI-gər-ən-ə-PRU-vl-WERK-floʊ", type:"连读+重音", tip:"approval 重音在第二音节；workflow 尾音弱读。审批流程。"}
+    ],
+    shadow:[
+      "how does an employee request a change to their goal",
+      "midway through the cycle",
+      "does that trigger an approval workflow"
+    ],
+    globalTip:"Demo 场景听力重点：客户常打断问『能不能做到 X』。抓住『疑问句的核心动作+对象』（request change / trigger approval），你的演示才能对准需求。",
+    suggest:"回应结构建议：先确认能做（Yes, let me show you）→ 现场演示对应操作（Goal 的 change request）→ 说明背后的审批流（configurable workflow）→ 反问客户的审批层级需求。",
+    modelAnswer:"Great question — yes, let me show you. When an employee edits a goal mid-cycle, SuccessFactors can route it through a configurable approval workflow, so the manager gets a request to approve or reject. Would you like the approval to go to just the direct manager, or also to HR?"
+  },
+  {
+    speaker:{nm:'Vikram Singh', rl:'客户 IT 系统管理员 · 印度', av:'👨🏽💻'},
+    en:"Okay, that looks good. Now, could you also show us how the dashboard looks from a manager's perspective? We want to make sure managers can only see their own team's data, not the entire organisation.",
+    zh:"好的，看起来不错。那你能不能也展示一下从经理视角看仪表盘是什么样的？我们想确保经理只能看到自己团队的数据，而不是整个组织的数据。",
+    sentences:[
+      {en:"Okay, that looks good.", zh:"好的，看起来不错。", points:[
+        {w:"looks good", heard:"lʊks-gʊd", type:"清晰", tip:"表示认可，可继续下一步演示。"}
+      ]},
+      {en:"Now, could you also show us how the dashboard looks from a manager's perspective?", zh:"那你能不能也展示一下从经理视角看仪表盘是什么样的？", points:[
+        {w:"could you also show us", heard:"kʊ-dʒə-ɔl-soʊ-shoʊ-əs", type:"连读", tip:"could you → /kʊdʒə/；show us 连读。请求演示。"},
+        {w:"manager's perspective", heard:"MA-ni-jərz-pər-SPEK-tiv", type:"重音", tip:"perspective 重音在第二音节。= 经理视角。"}
+      ]},
+      {en:"We want to make sure managers can only see their own team's data, not the entire organisation.", zh:"我们想确保经理只能看到自己团队的数据，而不是整个组织。", points:[
+        {w:"want to make sure", heard:"wonə-meik-shʊr", type:"连读", tip:"want to → wanna /wɒnə/；make sure = 确保。"},
+        {w:"their own team's data", heard:"ðer-oʊn-teemz-DEI-tə", type:"连读", tip:"权限关键点：只看自己团队 = Role-Based Permissions。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户关注权限），填空：",
+      template:"could you show us how the dashboard looks from a {0}? Managers can only see their {1}, not the entire {2}.",
+      blanks:["manager's perspective","own team's data","organisation"],
+      pool:["manager's perspective","own team's data","organisation","manager's perception","own teams' data","organization chart"],
+      diagnose:"卡点：<b>manager's perspective</b>（易混 perception）、<b>own team's data</b>。客户在确认权限隔离——用 RBP 回应。"
+    },
+    sounds:[
+      {written:"could you also show us", heard:"kʊ-dʒə-ɔlsoʊ-shoʊəs", type:"连读", tip:"could you 融合成 /kʊdʒə/。"},
+      {written:"manager's perspective", heard:"MA-ni-jərz-pər-SPEK-tiv", type:"重音", tip:"perspective 重音在第二音节 /pərˈspektɪv/。"},
+      {written:"their own team's data", heard:"ðer-oʊn-teemz-DEI-tə", type:"连读", tip:"data 美音 /ˈdeɪtə/，印度口音也常读 /ˈdɑːtə/。"}
+    ],
+    shadow:[
+      "show us the manager's perspective",
+      "managers can only see their own team's data",
+      "not the entire organisation"
+    ],
+    globalTip:"客户在 Demo 里反复确认『权限隔离』。听力抓 own team vs entire organisation 的对比——这是他最关心的安全点。",
+    suggest:"回应建议：确认可以（Absolutely）→ 演示切换到 manager 视角 → 点明由 Role-Based Permissions 控制可见范围 → 反问是否需要更细的字段级权限。",
+    modelAnswer:"Absolutely. Let me switch to a manager's login. As you can see, this manager only sees their own team's data — that's controlled by Role-Based Permissions. We can even restrict it down to specific fields. Do you need field-level restrictions as well, or is team-level visibility enough?"
+  },
+  {
+    speaker:{nm:'Ananya Reddy', rl:'客户 HR 业务负责人 · 印度', av:'👩🏽💼'},
+    en:"This is really helpful. One last thing — can you demonstrate how we'd export this data to, say, a PDF or Excel report for the leadership review next month?",
+    zh:"这真的很有帮助。最后一件事——你能演示一下我们要怎么把这些数据导出成 PDF 或 Excel 报表，用于下个月的领导层评审吗？",
+    sentences:[
+      {en:"This is really helpful.", zh:"这真的很有帮助。", points:[
+        {w:"really helpful", heard:"ri-li-HELP-fl", type:"清晰", tip:"表示认可。"}
+      ]},
+      {en:"One last thing —", zh:"最后一件事——", points:[
+        {w:"one last thing", heard:"wʌn-las-thing", type:"吞音", tip:"last 的 -t 几乎不发音。信号词：接下来是最后一个请求。"}
+      ]},
+      {en:"can you demonstrate how we'd export this data to a PDF or Excel report?", zh:"你能演示我们要怎么把数据导出成 PDF 或 Excel 报表吗？", points:[
+        {w:"how we'd export", heard:"hau-wid-ik-SPORT", type:"连读+弱读", tip:"we'd = we would 缩略 /wid/。export 重音在第二音节（动词）。"},
+        {w:"leadership review", heard:"LEE-dər-ship-ri-VYU", type:"重音", tip:"review 重音在后。= 领导层评审（deadline: next month）。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（导出需求 + 时间点），填空：",
+      template:"can you demonstrate how we'd {0} this data to a PDF or Excel report for the {1} {2}?",
+      blanks:["export","leadership review","next month"],
+      pool:["export","leadership review","next month","expert","leadership preview","next Monday"],
+      diagnose:"卡点：<b>export</b>（易混 expert）、<b>next month</b>（易混 next Monday）。时间点是需求约束，务必抓准。"
+    },
+    sounds:[
+      {written:"how we'd export", heard:"hau-wid-ik-SPORT", type:"缩略+连读", tip:"we'd = we would。export 动词重音在后。"},
+      {written:"a PDF or Excel report", heard:"ə-pi-di-ef-ɔr-EK-sel-ri-PORT", type:"连读", tip:"or 弱读 /ɔr/。导出格式。"},
+      {written:"for the leadership review", heard:"fər-thə-LEE-dər-ship-ri-VYU", type:"弱读", tip:"for the 弱读。review 重音在后。领导层评审。"}
+    ],
+    shadow:[
+      "can you demonstrate how we'd export this data",
+      "to a PDF or Excel report",
+      "for the leadership review next month"
+    ],
+    globalTip:"演示收尾常出现『导出/报表』类请求 + 时间点。抓格式（PDF/Excel）+ deadline（next month）——记下来作为交付项。",
+    suggest:"回应建议：确认可以（Sure）→ 演示导出按钮与格式选择 → 确认交付时间点（next month leadership review）→ 主动补充可否定时自动导出。",
+    modelAnswer:"Sure. Right here you can export any report to PDF or Excel with one click. For your leadership review next month, I'd suggest we also set up a scheduled export so the report is generated automatically. Shall I include that in the configuration plan?"
+  }
+];
+
+SCRIPTS['ec_issue'] = [
+  {
+    speaker:{nm:'Rahul Mehta', rl:'客户 HR 运维 · 印度', av:'👨🏽🔧'},
+    en:"Hi, we've got a bit of an urgent issue. Since yesterday's release, some of our employees are saying they can't submit their goals — they click the submit button and nothing happens. It's not everyone, just a few users. Any idea what's going on?",
+    zh:"你好，我们遇到一个比较紧急的问题。自从昨天发布之后，我们有些员工反映他们没法提交目标——点了提交按钮却没有任何反应。不是所有人，只是一部分用户。你知道是怎么回事吗？",
+    sentences:[
+      {en:"Hi, we've got a bit of an urgent issue.", zh:"你好，我们遇到一个比较紧急的问题。", points:[
+        {w:"we've got a bit of an", heard:"wiv-gɒ-tə-bi-də-vən", type:"连读", tip:"一连串弱读连读：we've got a bit of an → /wɪvɡɒtəbɪdəvən/。= 我们遇到一点…"},
+        {w:"urgent issue", heard:"ER-jənt-I-shu", type:"重音", tip:"urgent 重音在前。= 紧急问题。信号：这是要优先处理的事。"}
+      ]},
+      {en:"Since yesterday's release, some employees say they can't submit their goals —", zh:"自从昨天发布后，有些员工说他们没法提交目标——", points:[
+        {w:"yesterday's release", heard:"YES-tər-deiz-ri-LEES", type:"重音", tip:"release 重音在后。关键线索：问题始于『昨天的发布』。"},
+        {w:"can't submit", heard:"kaant-səb-MIT", type:"重音", tip:"submit 重音在后。抓 can't（不能）——症状核心。"}
+      ]},
+      {en:"they click the submit button and nothing happens.", zh:"他们点了提交按钮却没有反应。", points:[
+        {w:"nothing happens", heard:"NʌTH-ing-HA-pnz", type:"清晰", tip:"= 没有任何反应。症状描述。"}
+      ]},
+      {en:"It's not everyone, just a few users. Any idea what's going on?", zh:"不是所有人，只是一部分用户。你知道怎么回事吗？", points:[
+        {w:"just a few users", heard:"jʌs-tə-fyu-YU-zərz", type:"连读", tip:"just a 连读 /dʒʌstə/。范围线索：只影响部分用户（可能是权限/角色相关）。"},
+        {w:"what's going on", heard:"wʌts-goʊ-ing-ɒn", type:"连读", tip:"going on 连读。= 怎么回事。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户报障），抓住关键信息填空：",
+      template:"since {0}, some employees can't {1} their goals. It's not everyone, just {2}.",
+      blanks:["yesterday's release","submit","a few users"],
+      pool:["yesterday's release","submit","a few users","yesterday's belief","summit","if you use it"],
+      diagnose:"排障听力关键 = 抓『症状+范围+时间』：<b>yesterday's release</b>（何时开始）、<b>submit</b>（做什么失败）、<b>a few users</b>（影响范围）。三要素齐了才能定位问题。"
+    },
+    sounds:[
+      {written:"we've got a bit of an urgent issue", heard:"wiv-gɒtə-bidəvən-ER-jənt-Ishu", type:"连读串", tip:"整串弱读连读，是印度口音语速快的典型。抓 urgent issue 就懂大意。"},
+      {written:"since yesterday's release", heard:"sins-YES-tər-deiz-ri-LEES", type:"重音", tip:"release 重音在后。时间线索。"},
+      {written:"just a few users", heard:"jʌstə-fyu-YU-zərz", type:"连读", tip:"just a 连读。范围线索：部分用户。"}
+    ],
+    shadow:[
+      "we've got a bit of an urgent issue",
+      "since yesterday's release some employees can't submit their goals",
+      "it's not everyone just a few users"
+    ],
+    globalTip:"排障场景听力核心：抓『症状 + 范围 + 时间』三要素。范围（部分用户 vs 全部）往往指向根因（权限/角色 vs 系统级）。听不清细节可回放，但先抓这三点。",
+    suggest:"回应建议：先安抚+确认已收到（先复述症状 confirming back）→ 提出初步假设（部分用户→可能是权限/角色配置）→ 说明排查步骤 → 给时间预期。",
+    modelAnswer:"Thanks for flagging this — so just to confirm, since yesterday's release a few users can't submit their goals, and the button doesn't respond. Since it's only affecting some users, my first guess is a permission or role-config issue from the release. Let me check the affected users' roles right away — I'll get back to you within the hour with an update."
+  },
+  {
+    speaker:{nm:'Rahul Mehta', rl:'客户 HR 运维 · 印度', av:'👨🏽🔧'},
+    en:"That makes sense. I've just checked, and it seems the affected users were all recently moved to a new business unit last week. Could that reorganisation have changed their permissions somehow?",
+    zh:"这说得通。我刚查了一下，好像受影响的用户都是上周刚被调到一个新业务单元的。这次组织调整会不会以某种方式改变了他们的权限？",
+    sentences:[
+      {en:"That makes sense. I've just checked,", zh:"这说得通。我刚查了一下，", points:[
+        {w:"I've just checked", heard:"aiv-jʌs-chekt", type:"吞音", tip:"just 的 -t 与 checked 连读，几乎听不到。= 我刚查过。"}
+      ]},
+      {en:"and it seems the affected users were all recently moved to a new business unit last week.", zh:"好像受影响的用户都是上周刚被调到一个新业务单元的。", points:[
+        {w:"the affected users", heard:"thi-ə-FEK-tid-YU-zərz", type:"连读", tip:"affected 重音在第二音节。= 受影响的用户。"},
+        {w:"moved to a new business unit", heard:"muvd-tə-ə-nyu-BIZ-nis-yu-nit", type:"连读", tip:"关键线索：上周调到新 BU——很可能是根因。"}
+      ]},
+      {en:"Could that reorganisation have changed their permissions somehow?", zh:"这次组织调整会不会改变了他们的权限？", points:[
+        {w:"reorganisation", heard:"ri-or-gə-nai-ZEI-shn", type:"重音", tip:"长词，重音在 -zei-。= 重组/组织调整。"},
+        {w:"changed their permissions", heard:"cheinjd-ðer-pər-MISH-nz", type:"连读", tip:"客户自己给出假设——权限被改。顺着这个查 RBP。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户提供线索），填空：",
+      template:"the affected users were all recently {0} to a new {1} last week. Could that reorganisation have changed their {2}?",
+      blanks:["moved","business unit","permissions"],
+      pool:["moved","business unit","permissions","removed","business needs","provisions"],
+      diagnose:"卡点：<b>moved</b>（易混 removed）、<b>business unit</b>。客户给的线索『上周调新 BU』直接指向权限根因——听懂它就锁定了排查方向。"
+    },
+    sounds:[
+      {written:"moved to a new business unit", heard:"muvd-tə-ə-nyu-BIZ-nis-yu-nit", type:"连读", tip:"business 只两音节 /ˈbɪznɪs/。新业务单元。"},
+      {written:"reorganisation", heard:"ri-or-gə-nai-ZEI-shn", type:"重音", tip:"重音在倒数第二音节。= 组织重组。"},
+      {written:"changed their permissions", heard:"cheinjd-ðer-pər-MISH-nz", type:"连读", tip:"permissions 尾音弱读 /nz/。"}
+    ],
+    shadow:[
+      "the affected users were recently moved to a new business unit",
+      "could that reorganisation",
+      "have changed their permissions"
+    ],
+    globalTip:"客户主动提供了关键线索（上周调 BU）。排障听力要敏锐捕捉这种『变更事件』——它往往就是根因。抓 moved / new business unit / permissions 三个词就够定位。",
+    suggest:"回应建议：认可客户线索（That's a very useful clue）→ 确认因果假设（BU 变更→RBP 未更新）→ 说明修复动作 → 给出预防建议。",
+    modelAnswer:"That's a very useful clue. Yes — when users move to a new business unit, their role-based permissions don't always update automatically, so they can lose the rights to submit goals. I'll re-sync the permissions for those users now, and going forward we can set up a rule to auto-update permissions on any org move. Let me fix the affected users first and confirm."
+  },
+  {
+    speaker:{nm:'Deepa Nair', rl:'客户项目经理 · 印度', av:'👩🏽💼'},
+    en:"Thanks for jumping on this so quickly. Once you've fixed it, could you send us a short root-cause summary? The leadership will definitely ask what happened and how we're preventing it from recurring.",
+    zh:"谢谢你这么快就来处理。等你修复之后，能不能给我们发一份简短的根因说明？领导层肯定会问发生了什么，以及我们要怎么防止它再次发生。",
+    sentences:[
+      {en:"Thanks for jumping on this so quickly.", zh:"谢谢你这么快就来处理。", points:[
+        {w:"jumping on this", heard:"jʌm-ping-ɒn-thɪs", type:"连读", tip:"jump on = 立刻着手处理（地道口语）。"}
+      ]},
+      {en:"Once you've fixed it, could you send us a short root-cause summary?", zh:"等你修复之后，能不能发一份简短的根因说明？", points:[
+        {w:"once you've fixed it", heard:"wʌns-yuv-fik-stit", type:"连读", tip:"you've fixed it 连读成一串。once = 一旦/等到。"},
+        {w:"root-cause summary", heard:"rut-kɔz-SʌM-ri", type:"重音", tip:"root cause = 根本原因（排障术语）。summary 重音在前。交付项！"}
+      ]},
+      {en:"The leadership will definitely ask what happened and how we're preventing it from recurring.", zh:"领导层肯定会问发生了什么，以及我们怎么防止它再次发生。", points:[
+        {w:"definitely ask", heard:"DE-fi-nit-li-ask", type:"重音", tip:"definitely 重音在前，印度口音每音节清晰。"},
+        {w:"preventing it from recurring", heard:"pri-VEN-ting-it-frəm-ri-KER-ing", type:"连读", tip:"recurring 重音在第二音节。= 防止再次发生（客户要预防措施）。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（收尾+交付请求），填空：",
+      template:"could you send us a short {0}? The leadership will ask what happened and how we're {1} it from {2}.",
+      blanks:["root-cause summary","preventing","recurring"],
+      pool:["root-cause summary","preventing","recurring","root-cost summary","presenting","occurring"],
+      diagnose:"卡点：<b>root-cause summary</b>（root-cause 是排障术语）、<b>recurring</b>（易混 occurring）。客户要的交付项 = 根因说明 + 预防措施。"
+    },
+    sounds:[
+      {written:"jumping on this so quickly", heard:"jʌmping-ɒn-thɪs-soʊ-KWIK-li", type:"连读", tip:"jump on this = 立刻处理。"},
+      {written:"a short root-cause summary", heard:"ə-shɔrt-rut-kɔz-SʌM-ri", type:"重音", tip:"root cause = 根因。交付项。"},
+      {written:"preventing it from recurring", heard:"pri-VEN-ting-it-frəm-ri-KER-ing", type:"连读", tip:"recurring 重音在第二音节。= 防止复发。"}
+    ],
+    shadow:[
+      "thanks for jumping on this so quickly",
+      "could you send us a short root-cause summary",
+      "how we're preventing it from recurring"
+    ],
+    globalTip:"排障收尾常有『要文档+防复发』的请求。听力抓交付项（root-cause summary）+ 诉求（prevent recurring）——这决定你事后要交什么。",
+    suggest:"回应建议：接受任务并复述确认→ 承诺根因说明的交付时间→ 主动给出预防措施（auto-sync permissions on org move）→ 让客户安心。",
+    modelAnswer:"Of course. Once it's fixed, I'll send you a short root-cause summary — what caused it, who was affected, and the fix. To prevent it recurring, I'll recommend an automated permission-sync whenever users change business units. I'll have the summary to you by end of day. Does that work for the leadership update?"
+  }
+];
+
+SCRIPTS['ec_status'] = [
+  {
+    speaker:{nm:'Sanjay Gupta', rl:'客户项目发起人 · 印度', av:'👨🏽💼'},
+    en:"Good morning everyone. Before we dive in, could you give us a quick recap of where we stand? Last time we were told the Employee Central migration was about eighty percent done. Has that number moved, and are we still on track for the go-live at the end of the quarter?",
+    zh:"大家早上好。在深入讨论之前，你能不能快速回顾一下我们目前的进展？上次我们被告知 Employee Central 的数据迁移大约完成了 80%。这个数字有变化吗？我们还能按季度末上线的计划推进吗？",
+    sentences:[
+      {en:"Good morning everyone. Before we dive in,", zh:"大家早上好。在深入讨论之前，", points:[
+        {w:"dive in", heard:"dai-vin", type:"连读", tip:"dive in = 深入/开始讨论。连读成 /daɪvɪn/。"}
+      ]},
+      {en:"could you give us a quick recap of where we stand?", zh:"你能不能快速回顾一下我们目前的进展？", points:[
+        {w:"give us a quick recap", heard:"gi-vəs-ə-kwik-RI-kap", type:"连读+重音", tip:"give us a 连读；recap 重音在前 /ˈriːkæp/ = 回顾/概述。"},
+        {w:"where we stand", heard:"wer-wi-stand", type:"固定表达", tip:"where we stand = 我们目前的状况/进展。商务高频。"}
+      ]},
+      {en:"Last time we were told the Employee Central migration was about eighty percent done.", zh:"上次我们被告知 Employee Central 迁移大约完成了 80%。", points:[
+        {w:"Employee Central migration", heard:"em-PLOI-i-SEN-trl-mai-GREI-shn", type:"重音", tip:"Employee Central（EC）是 SF 核心人事模块。migration 重音在后。"},
+        {w:"about eighty percent", heard:"ə-bau-tei-ti-pər-sent", type:"连读+数字", tip:"关键数字 80%——进度基线，务必抓准。about 弱读。"}
+      ]},
+      {en:"Are we still on track for the go-live at the end of the quarter?", zh:"我们还能按季度末上线的计划推进吗？", points:[
+        {w:"on track", heard:"ɒn-trak", type:"固定表达", tip:"on track = 按计划推进（进度术语）。"},
+        {w:"go-live at the end of the quarter", heard:"goʊ-laiv-ət-thi-en-dəv-thə-KWOR-tər", type:"连读", tip:"go-live = 上线（SF 项目里程碑）。end of the quarter = 季度末（deadline）。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（项目发起人问进度），填空：",
+      template:"the Employee Central migration was about {0} done. Are we still {1} for the go-live at the end of the {2}?",
+      blanks:["eighty percent","on track","quarter"],
+      pool:["eighty percent","on track","quarter","eighteen percent","on trach","quarterly"],
+      diagnose:"卡点：<b>eighty percent</b>（易混 eighteen percent——8字头数字要小心）、<b>on track</b>（进度术语）。发起人关注两点：进度数字 + 是否守住上线时间。"
+    },
+    sounds:[
+      {written:"give us a quick recap", heard:"gi-vəsə-kwik-RI-kap", type:"连读", tip:"recap 重音在前。= 快速回顾。"},
+      {written:"about eighty percent done", heard:"ə-bau-tei-ti-pər-sent-dʌn", type:"连读+数字", tip:"eighty vs eighteen：重音与尾音区分。进度基线。"},
+      {written:"on track for the go-live", heard:"ɒn-trak-fər-thə-goʊ-laiv", type:"连读", tip:"go-live = 上线。for the 弱读。"}
+    ],
+    shadow:[
+      "could you give us a quick recap of where we stand",
+      "the migration was about eighty percent done",
+      "are we still on track for the go-live"
+    ],
+    globalTip:"状态汇报听力核心：抓『进度数字 + 时间节点 + on track 与否』。发起人在核对基线（上次 80%）与承诺（季度末上线）——回应要正面给出数字与信心。",
+    suggest:"回应建议：先给最新进度数字（对齐上次基线）→ 明确是否 on track → 点出风险或依赖 → 表达对 deadline 的信心（或提前预警）。",
+    modelAnswer:"Good morning. Sure — quick recap: the Employee Central migration has moved from eighty to ninety-two percent since last time, so we're on track for the go-live at the end of the quarter. The one dependency to watch is the payroll data validation, which we expect to close next week. So overall, we're in good shape. Shall I walk through the detailed milestones?"
+  },
+  {
+    speaker:{nm:'Meera Iyer', rl:'客户 HR 负责人 · 印度', av:'👩🏽💼'},
+    en:"That's reassuring. But I'm a little concerned about the payroll validation you mentioned — if that slips, what's the impact on the go-live date? And do we have a fallback plan in case the data isn't clean in time?",
+    zh:"这让人放心。但我对你提到的薪资数据验证有点担心——如果那个环节延误了，对上线日期会有什么影响？万一数据没能及时清理干净，我们有没有备用方案？",
+    sentences:[
+      {en:"That's reassuring.", zh:"这让人放心。", points:[
+        {w:"reassuring", heard:"ri-ə-SHUR-ing", type:"重音", tip:"reassuring 重音在第三音节 /riːəˈʃʊərɪŋ/ = 令人安心的。"}
+      ]},
+      {en:"But I'm a little concerned about the payroll validation you mentioned —", zh:"但我对你提到的薪资数据验证有点担心——", points:[
+        {w:"a little concerned about", heard:"ə-li-tl-kən-SERND-ə-baut", type:"连读", tip:"concerned about 连读；委婉表达担忧的商务说法。"},
+        {w:"payroll validation", heard:"PEI-roʊl-va-li-DEI-shn", type:"重音", tip:"payroll = 薪资；validation 重音在后。SF 上线前关键校验。"}
+      ]},
+      {en:"if that slips, what's the impact on the go-live date?", zh:"如果那个环节延误了，对上线日期有什么影响？", points:[
+        {w:"if that slips", heard:"if-thət-slips", type:"弱读", tip:"slip = 延误/滑期（进度术语）。that 弱读。"},
+        {w:"impact on the go-live date", heard:"IM-pakt-ɒn-thə-goʊ-laiv-deit", type:"重音", tip:"impact 名词重音在前。客户在问『延误的连锁影响』。"}
+      ]},
+      {en:"And do we have a fallback plan in case the data isn't clean in time?", zh:"万一数据没能及时清理干净，我们有没有备用方案？", points:[
+        {w:"fallback plan", heard:"FOL-bak-plan", type:"重音", tip:"fallback plan = 备用/应急方案。重音在 fall。"},
+        {w:"in case the data isn't clean", heard:"in-keis-thə-DEI-tə-i-znt-klin", type:"连读", tip:"in case = 万一；data isn't clean = 数据不干净（未清理）。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户问风险与预案），填空：",
+      template:"if that slips, what's the {0} on the go-live date? Do we have a {1} in case the data isn't {2} in time?",
+      blanks:["impact","fallback plan","clean"],
+      pool:["impact","fallback plan","clean","input","feedback plan","clear"],
+      diagnose:"卡点：<b>impact</b>（易混 input）、<b>fallback plan</b>（应急方案）。客户问的是『风险的连锁影响 + 有没有 Plan B』——回应要覆盖这两点。"
+    },
+    sounds:[
+      {written:"a little concerned about", heard:"ə-litl-kən-SERND-əbaut", type:"连读", tip:"委婉表达担忧。concerned about 连读。"},
+      {written:"impact on the go-live date", heard:"IM-pakt-ɒn-thə-goʊ-laiv-deit", type:"重音", tip:"impact 名词重音在前。"},
+      {written:"a fallback plan in case", heard:"ə-FOL-bak-plan-in-keis", type:"重音", tip:"fallback plan = 应急方案；in case = 万一。"}
+    ],
+    shadow:[
+      "if that slips what's the impact on the go-live date",
+      "do we have a fallback plan",
+      "in case the data isn't clean in time"
+    ],
+    globalTip:"客户在做风险追问：『如果 X 出问题会怎样 + 有没有备选』。听力抓 impact（影响）与 fallback plan（预案）——这是典型的风险管理提问，回应要显得有准备。",
+    suggest:"回应建议：正面回应影响（量化：延误几天 → 上线推迟多久）→ 明确给出 fallback plan（分批上线/临时手工核对）→ 表达可控，让客户安心。",
+    modelAnswer:"That's a fair concern. If the payroll validation slips by a week, it would push the go-live by roughly three to four days — not the full quarter. And yes, we do have a fallback: we can go live with core HR data first and run payroll in a parallel test cycle until the data is fully clean. So even in the worst case, we're not blocked. I'll add this contingency to the risk log. Does that give you enough comfort?"
+  },
+  {
+    speaker:{nm:'Sanjay Gupta', rl:'客户项目发起人 · 印度', av:'👨🏽💼'},
+    en:"Perfect, that gives me confidence. Let's make sure the risk log is shared with the steering committee before Friday. And going forward, can we get a written status update every week, just a short one, so leadership stays in the loop?",
+    zh:"很好，这让我有信心了。我们要确保这份风险日志在周五之前分享给指导委员会。另外从现在起，我们能不能每周收到一份书面的状态更新，简短的就行，好让领导层随时了解进展？",
+    sentences:[
+      {en:"Perfect, that gives me confidence.", zh:"很好，这让我有信心了。", points:[
+        {w:"gives me confidence", heard:"giv-zmi-KON-fi-dəns", type:"连读", tip:"gives me 连读。表示认可。"}
+      ]},
+      {en:"Let's make sure the risk log is shared with the steering committee before Friday.", zh:"确保风险日志在周五之前分享给指导委员会。", points:[
+        {w:"risk log", heard:"risk-log", type:"术语", tip:"risk log = 风险日志（项目治理文档）。交付项。"},
+        {w:"steering committee before Friday", heard:"STIR-ing-kə-MI-ti-bi-fɔr-FRAI-dei", type:"重音", tip:"committee 重音在中。deadline: before Friday（周五前）。"}
+      ]},
+      {en:"Can we get a written status update every week, just a short one,", zh:"我们能不能每周收到一份简短的书面状态更新，", points:[
+        {w:"written status update", heard:"RI-tn-STEI-təs-ʌp-deit", type:"连读", tip:"written 的 -tt- 成喉塞音；status update = 状态更新。"},
+        {w:"every week, just a short one", heard:"ev-ri-wik-jʌs-tə-shɔrt-wʌn", type:"连读", tip:"频率要求：每周一次；just a short one 连读 = 简短的就行。"}
+      ]},
+      {en:"so leadership stays in the loop?", zh:"好让领导层随时了解进展？", points:[
+        {w:"stays in the loop", heard:"steiz-in-thə-lup", type:"固定表达", tip:"in the loop = 知情/在沟通圈内。商务高频。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（发起人定沟通节奏 + deadline），填空：",
+      template:"make sure the {0} is shared with the steering committee before {1}. Can we get a written status update {2}?",
+      blanks:["risk log","Friday","every week"],
+      pool:["risk log","Friday","every week","risk lock","Thursday","everywhere"],
+      diagnose:"卡点：<b>risk log</b>（易混 risk lock）、<b>Friday</b>（周几要听准）、<b>every week</b>（频率）。发起人在定：交什么 + 何时 + 多久一次。"
+    },
+    sounds:[
+      {written:"the risk log is shared", heard:"thə-risk-log-iz-sherd", type:"连读", tip:"risk log = 风险日志。log is 连读。"},
+      {written:"before Friday", heard:"bi-fɔr-FRAI-dei", type:"重音", tip:"deadline。Friday 重音在前。"},
+      {written:"stays in the loop", heard:"steiz-in-thə-lup", type:"固定表达", tip:"in the loop = 保持知情。"}
+    ],
+    shadow:[
+      "make sure the risk log is shared before Friday",
+      "can we get a written status update every week",
+      "so leadership stays in the loop"
+    ],
+    globalTip:"汇报收尾常有『沟通机制+交付节奏』的要求。听力抓交付项（risk log）+ deadline（before Friday）+ 频率（every week）——记下来作为承诺项。",
+    suggest:"回应建议：接受并复述确认（交付项+deadline+频率）→ 承诺具体动作（周五前发风险日志、每周五发周报）→ 主动提议格式（一页纸模板）让客户放心。",
+    modelAnswer:"Absolutely. So to confirm — I'll share the risk log with the steering committee before Friday, and from next week I'll send a short written status update every Friday to keep leadership in the loop. I'll use a one-page format covering progress, risks, and next steps. Does that cadence work for you?"
+  }
+];
+
+SCRIPTS['ec_train'] = [
+  {
+    speaker:{nm:'Kavita Joshi', rl:'客户 HR 专员（学员）· 印度', av:'🧑🏽🎓'},
+    en:"Hi, thanks for the training session. I've got a question about the goal-setting screen — when I try to assign a goal to my team, I don't see the option to set a weightage for each goal. Is that something that's turned off, or am I looking in the wrong place?",
+    zh:"你好，谢谢这次培训。我对目标设定的界面有个问题——当我尝试给团队分配目标时，我看不到给每个目标设置权重的选项。是这个功能被关掉了，还是我找错地方了？",
+    sentences:[
+      {en:"Hi, thanks for the training session.", zh:"你好，谢谢这次培训。", points:[
+        {w:"training session", heard:"TREI-ning-SE-shn", type:"清晰", tip:"培训场景开场语。"}
+      ]},
+      {en:"I've got a question about the goal-setting screen —", zh:"我对目标设定的界面有个问题——", points:[
+        {w:"I've got a question", heard:"aiv-gɒ-tə-KWES-chn", type:"连读", tip:"I've got a 连读成一串 /aɪvɡɒtə/。= 我有个问题。"},
+        {w:"goal-setting screen", heard:"goʊl-se-ting-skrin", type:"复合词", tip:"goal-setting = 目标设定（SF 界面）。"}
+      ]},
+      {en:"when I try to assign a goal to my team, I don't see the option to set a weightage for each goal.", zh:"当我给团队分配目标时，看不到给每个目标设权重的选项。", points:[
+        {w:"assign a goal", heard:"ə-SAI-nə-goʊl", type:"连读", tip:"assign a 连读；assign 重音在后。= 分配目标。"},
+        {w:"weightage for each goal", heard:"WEI-tij-fər-ich-goʊl", type:"印式词汇", tip:"weightage 是印度英语常用词 = 权重（美式常说 weight/weighting）。听不懂时抓 for each goal。"}
+      ]},
+      {en:"Is that something that's turned off, or am I looking in the wrong place?", zh:"是这个功能被关掉了，还是我找错地方了？", points:[
+        {w:"turned off", heard:"ternd-ɒf", type:"连读", tip:"turned off = 被关闭/停用（功能）。"},
+        {w:"looking in the wrong place", heard:"lʊ-king-in-thə-rɒng-pleis", type:"连读", tip:"学员自我怀疑：是不是找错地方。回应要给明确指引。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（学员提问），填空：",
+      template:"I don't see the option to set a {0} for each goal. Is that something that's {1}, or am I looking in the {2}?",
+      blanks:["weightage","turned off","wrong place"],
+      pool:["weightage","turned off","wrong place","weightless","turned up","wrong pace"],
+      diagnose:"卡点：<b>weightage</b>（印度英语词=权重，可能没听过）、<b>turned off</b>（易混 turned up）。学员在问『权重选项去哪了』——先听懂这个才能教对。"
+    },
+    sounds:[
+      {written:"I've got a question", heard:"aiv-gɒtə-KWES-chn", type:"连读", tip:"I've got a 融合成一串。"},
+      {written:"assign a goal to my team", heard:"ə-SAInə-goʊl-tə-mai-tim", type:"连读", tip:"assign a 连读。分配目标给团队。"},
+      {written:"weightage for each goal", heard:"WEI-tij-fər-ich-goʊl", type:"印式词汇", tip:"weightage = 权重（印度英语）。抓 for each goal 推断。"}
+    ],
+    shadow:[
+      "I've got a question about the goal-setting screen",
+      "I don't see the option to set a weightage",
+      "am I looking in the wrong place"
+    ],
+    globalTip:"培训场景听力特点：学员会用『不太标准/本地化的词』（如印度英语 weightage、prepone、do the needful）。策略：抓住上下文（for each goal）推断意思，别卡在单个陌生词上。",
+    suggest:"回应建议：先安抚（Good question, you're not doing anything wrong）→ 说明原因（weightage 是可配置项，可能未启用）→ 给出明确操作指引（去哪开启）→ 确认学员跟上了。",
+    modelAnswer:"Good question — and you're not looking in the wrong place. The weightage option is configurable, and it looks like it's currently turned off for your template. Once an admin enables 'goal weightage' in the template settings, you'll see a percentage field next to each goal. I'll show you exactly where that setting is. Does that make sense so far?"
+  },
+  {
+    speaker:{nm:'Arjun Nair', rl:'客户 HR 专员（学员）· 印度', av:'🧑🏽💻'},
+    en:"Okay got it. And one more doubt — after I submit the appraisal, can I still edit it if I made a mistake? Or does it get locked immediately? Because sometimes we need to make small corrections after submitting.",
+    zh:"好的，明白了。还有一个疑问——我提交考核之后，如果发现填错了还能修改吗？还是说提交后就立刻被锁定了？因为我们有时候提交之后需要做些小的修正。",
+    sentences:[
+      {en:"Okay got it. And one more doubt —", zh:"好的，明白了。还有一个疑问——", points:[
+        {w:"one more doubt", heard:"wʌn-mɔr-daut", type:"印式词汇", tip:"doubt 在印度英语里常表示『疑问/问题』（=question），不是『怀疑』。这是重要的本地化用法！"}
+      ]},
+      {en:"after I submit the appraisal, can I still edit it if I made a mistake?", zh:"我提交考核之后，如果填错了还能修改吗？", points:[
+        {w:"submit the appraisal", heard:"səb-MIT-thi-ə-PREI-zl", type:"连读+重音", tip:"submit、appraisal 重音都在后。appraisal = 绩效考核。"},
+        {w:"can I still edit it", heard:"kə-nai-stil-E-di-tit", type:"连读", tip:"can I 连读；edit it 连读 /edɪtɪt/。= 还能编辑吗。"}
+      ]},
+      {en:"Or does it get locked immediately?", zh:"还是说提交后立刻被锁定了？", points:[
+        {w:"get locked immediately", heard:"ge-lɒk-ti-MI-di-ət-li", type:"连读+重音", tip:"get locked 连读；immediately 重音在第二音节。= 立即锁定。"}
+      ]},
+      {en:"Because sometimes we need to make small corrections after submitting.", zh:"因为我们有时提交后需要做些小修正。", points:[
+        {w:"make small corrections", heard:"meik-smol-kə-REK-shnz", type:"连读", tip:"corrections 重音在第二音节。学员的真实诉求：提交后想改。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（学员问提交后能否修改），填空：",
+      template:"after I submit the appraisal, can I still {0} it? Or does it get {1}? Sometimes we need to make small {2} after submitting.",
+      blanks:["edit","locked immediately","corrections"],
+      pool:["edit","locked immediately","corrections","added","locked media","connections"],
+      diagnose:"卡点：<b>edit</b>、<b>locked immediately</b>（immediately 长词）。注意学员说的 <b>doubt</b> 在印度英语里 = question（疑问），不是怀疑！听懂诉求：提交后能否修改。"
+    },
+    sounds:[
+      {written:"submit the appraisal", heard:"səb-MIT-thi-ə-PREI-zl", type:"重音", tip:"appraisal = 绩效考核，重音在第二音节。"},
+      {written:"get locked immediately", heard:"ge-lɒk-ti-MI-di-ət-li", type:"连读", tip:"immediately 重音在 -mi-。= 立即锁定。"},
+      {written:"make small corrections", heard:"meik-smol-kə-REK-shnz", type:"连读", tip:"corrections 尾音弱读。= 做小修正。"}
+    ],
+    shadow:[
+      "after I submit the appraisal can I still edit it",
+      "or does it get locked immediately",
+      "we need to make small corrections after submitting"
+    ],
+    globalTip:"印度英语高频本地化用法：doubt = question（疑问）、weightage = 权重。培训时若学员说 'I have a doubt'，不是质疑你，而是有问题要问。抓住这类词的真实含义，回应才不会跑偏。",
+    suggest:"回应建议：先直接回答能否修改（Yes/No + 条件）→ 说明机制（提交后进入审批则锁定，可申请退回）→ 给实操建议（提交前 review）→ 确认解决疑问。",
+    modelAnswer:"Great doubt — I mean, great question! After you submit an appraisal, it does get locked to keep the record consistent. But you're not stuck: your manager or an admin can send it back to you for edits if you need to make a correction. My tip is to review carefully before submitting, but if a mistake slips through, there's always a way to reopen it. Shall I show you how the send-back works?"
+  },
+  {
+    speaker:{nm:'Kavita Joshi', rl:'客户 HR 专员（学员）· 印度', av:'🧑🏽🎓'},
+    en:"This has been really useful. Before we wrap up, would it be possible to get a short reference guide with screenshots? Something we can share with the rest of the team who couldn't attend today's session.",
+    zh:"这次培训真的很有用。在结束之前，能不能给我们一份带截图的简短参考指南？可以分享给今天没能参加培训的其他团队成员。",
+    sentences:[
+      {en:"This has been really useful.", zh:"这次真的很有用。", points:[
+        {w:"has been really useful", heard:"həz-bin-ri-li-YUS-fl", type:"弱读", tip:"has been 弱读。表示认可。"}
+      ]},
+      {en:"Before we wrap up, would it be possible to get a short reference guide with screenshots?", zh:"结束之前，能不能给一份带截图的简短参考指南？", points:[
+        {w:"would it be possible", heard:"wʊ-di-bi-PO-si-bl", type:"连读", tip:"would it be 连读 /wʊdɪtbi/。委婉请求的商务说法。"},
+        {w:"reference guide with screenshots", heard:"RE-frəns-gaid-wið-SKRIN-shots", type:"重音", tip:"reference guide = 参考指南（交付项）。screenshots = 截图。"}
+      ]},
+      {en:"Something we can share with the rest of the team who couldn't attend today's session.", zh:"可以分享给今天没能参加的其他团队成员。", points:[
+        {w:"share with the rest of the team", heard:"sher-wið-thə-res-təv-thə-tim", type:"连读", tip:"rest of the 连读。= 团队其余成员。"},
+        {w:"couldn't attend today's session", heard:"kʊd-nt-ə-TEND-tə-deiz-SE-shn", type:"连读", tip:"couldn't 的 -t 弱化；attend 重音在后。= 没能参加今天的培训。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（学员要培训材料），填空：",
+      template:"would it be possible to get a short {0} with {1}? Something to share with the team who couldn't {2} today.",
+      blanks:["reference guide","screenshots","attend"],
+      pool:["reference guide","screenshots","attend","reference guy","screen shorts","extend"],
+      diagnose:"卡点：<b>reference guide</b>、<b>screenshots</b>（易混 screen shorts）。学员要的交付项 = 带截图的参考指南，用途 = 给缺席的同事。"
+    },
+    sounds:[
+      {written:"would it be possible", heard:"wʊ-di-bi-PO-si-bl", type:"连读", tip:"would it be 连读。委婉请求。"},
+      {written:"a short reference guide", heard:"ə-shɔrt-RE-frəns-gaid", type:"重音", tip:"reference 重音在前。= 参考指南。"},
+      {written:"couldn't attend today's session", heard:"kʊdnt-ə-TEND-tədeiz-SE-shn", type:"连读", tip:"attend 重音在后。= 没能参加。"}
+    ],
+    shadow:[
+      "would it be possible to get a short reference guide",
+      "with screenshots",
+      "to share with the team who couldn't attend"
+    ],
+    globalTip:"培训收尾常有『要材料/文档』的请求。听力抓交付项（reference guide + screenshots）+ 用途（给缺席同事）——记下来作为培训后的跟进动作。",
+    suggest:"回应建议：欣然答应→ 复述交付项确认（带截图的参考指南）→ 给交付时间→ 主动加值（附常见问题 FAQ 或录屏）。",
+    modelAnswer:"Absolutely, I'd be happy to. I'll put together a short reference guide with step-by-step screenshots covering what we went through today, so you can share it with the team members who couldn't attend. I'll also add a quick FAQ at the end for the common questions. I'll send it over by tomorrow. Would a PDF work best for sharing?"
+  }
+];
+
+SCRIPTS['comp_req'] = [
+  {
+    speaker:{nm:'Priya Sharma', rl:'客户 HR 总监 · 印度', av:'👩🏽💼'},
+    en:"So for the compensation planning cycle, we want managers to allocate merit increases and bonuses within a budget that HR sets at the top. The system should stop them from going over their budget, and everything should respect the pay ranges for each grade. Can SuccessFactors Compensation handle this?",
+    zh:"那么对于薪酬规划周期，我们希望经理在 HR 设定的预算范围内分配调薪和奖金。系统应该阻止他们超出预算，而且所有分配都要遵守各薪级对应的薪资区间。SuccessFactors Compensation 能支持这个吗？",
+    sentences:[
+      {en:"So for the compensation planning cycle,", zh:"那么对于薪酬规划周期，", points:[
+        {w:"compensation planning cycle", heard:"kom-pen-SEI-shn-PLA-ning-SAI-kl", type:"重音", tip:"compensation 重音在第三音节。= 薪酬规划周期（Comp 模块核心流程）。"}
+      ]},
+      {en:"we want managers to allocate merit increases and bonuses within a budget that HR sets at the top.", zh:"我们希望经理在 HR 从上层设定的预算内分配调薪和奖金。", points:[
+        {w:"allocate merit increases", heard:"A-lo-keit-ME-rit-IN-kri-siz", type:"重音+术语", tip:"allocate = 分配；merit increase = 绩效调薪（Comp 核心术语，不是普通 raise）。"},
+        {w:"within a budget", heard:"wi-thi-nə-BʌJ-it", type:"连读", tip:"within a 连读 /wɪðɪnə/。budget = 预算（Comp 约束核心）。"}
+      ]},
+      {en:"The system should stop them from going over their budget, and everything should respect the pay ranges for each grade.", zh:"系统应阻止他们超预算，且一切都要遵守各薪级的薪资区间。", points:[
+        {w:"going over their budget", heard:"goʊ-ing-oʊ-vər-ðer-BʌJ-it", type:"连读", tip:"go over = 超出。预算控制需求。"},
+        {w:"pay ranges for each grade", heard:"pei-rein-jiz-fər-ich-greid", type:"术语", tip:"pay range = 薪资区间；grade = 薪级/职级。Comp 模块关键概念（区别于 EC 的组织结构）。"}
+      ]},
+      {en:"Can SuccessFactors Compensation handle this?", zh:"SuccessFactors Compensation 能支持这个吗？", points:[
+        {w:"Compensation handle this", heard:"kom-pen-SEI-shn-HAN-dl-thɪs", type:"重音", tip:"客户的核心提问点——能否支持带预算与薪级约束的薪酬规划。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（Comp 模块需求），填空：",
+      template:"we want managers to allocate {0} within a {1} that HR sets, and everything should respect the {2} for each grade.",
+      blanks:["merit increases","budget","pay ranges"],
+      pool:["merit increases","budget","pay ranges","merit increments","budget cut","pay grades"],
+      diagnose:"薪酬模块术语密集：<b>merit increases</b>（绩效调薪，非普通 raise）、<b>budget</b>（预算约束）、<b>pay ranges</b>（薪资区间，易混 pay grades）。听懂这三个术语才抓得住 Comp 需求。"
+    },
+    sounds:[
+      {written:"allocate merit increases and bonuses", heard:"A-lokeit-ME-rit-INkrisiz-ən-BOʊ-nsiz", type:"重音+连读", tip:"allocate 重音在前；merit increase 是 Comp 固定搭配。"},
+      {written:"going over their budget", heard:"goʊing-oʊvər-ðer-BʌJit", type:"连读", tip:"go over = 超出预算。"},
+      {written:"pay ranges for each grade", heard:"pei-reinjiz-fər-ich-greid", type:"术语", tip:"pay range vs pay grade：range 是区间，grade 是等级。"}
+    ],
+    shadow:[
+      "managers allocate merit increases within a budget",
+      "the system should stop them going over budget",
+      "respect the pay ranges for each grade"
+    ],
+    globalTip:"薪酬（Comp）模块 vs 组织（EC）模块：EC 聊组织架构/法人实体，Comp 聊预算/调薪/薪级区间。同样是『需求澄清』，术语体系完全不同——听力要建立 Comp 的术语库（merit / budget / pay range / grade）。",
+    suggest:"回应建议：确认能做（Yes）→ 点出 Comp 的对应功能（budget enforcement + salary range guardrails）→ 说明超预算会被系统拦截 → 反问预算是按 BU 还是全局分配。",
+    modelAnswer:"Yes, absolutely. SuccessFactors Compensation is built for exactly this. HR sets top-down budgets, and managers allocate merit increases and bonuses within them — the system enforces the budget and flags any over-allocation. It also applies salary range guardrails, so proposals outside a grade's pay range get warned or blocked. Quick question: should the budget be enforced at the business-unit level, or per manager?"
+  }
+];
+
+SCRIPTS['comp_demo'] = [
+  {
+    speaker:{nm:'Ananya Reddy', rl:'客户薪酬经理 · 印度', av:'👩🏽💼'},
+    en:"Thanks for the demo. On this comp planning worksheet you're showing, when a manager enters a proposed increase, does the system show them in real time how much budget they have left? And does it flag if they go outside the pay range for that grade?",
+    zh:"谢谢演示。你现在展示的这个薪酬规划工作表，当经理输入一个建议的调薪时，系统会实时显示他们还剩多少预算吗？如果他们超出了该薪级的薪资区间，系统会不会提示？",
+    sentences:[
+      {en:"Thanks for the demo.", zh:"谢谢演示。", points:[
+        {w:"the demo", heard:"thə-DE-moʊ", type:"清晰", tip:"演示开场。"}
+      ]},
+      {en:"On this comp planning worksheet you're showing,", zh:"你现在展示的这个薪酬规划工作表，", points:[
+        {w:"comp planning worksheet", heard:"komp-PLA-ning-WERK-shit", type:"术语", tip:"comp = compensation 缩略；worksheet = 规划工作表（Comp 界面）。"}
+      ]},
+      {en:"when a manager enters a proposed increase, does the system show them in real time how much budget they have left?", zh:"当经理输入一个建议调薪时，系统会实时显示还剩多少预算吗？", points:[
+        {w:"proposed increase", heard:"prə-POʊZD-IN-kris", type:"重音", tip:"proposed increase = 建议的调薪。increase 名词重音在前。"},
+        {w:"how much budget they have left", heard:"hau-mʌch-BʌJ-it-ðei-həv-left", type:"连读", tip:"budget left = 剩余预算。实时预算显示需求。"}
+      ]},
+      {en:"And does it flag if they go outside the pay range for that grade?", zh:"如果超出该薪级的薪资区间，系统会提示吗？", points:[
+        {w:"does it flag", heard:"dʌ-zit-flag", type:"连读", tip:"flag = 标记/提示（系统告警）。does it 连读。"},
+        {w:"outside the pay range for that grade", heard:"aut-said-thə-pei-reinj-fər-ðət-greid", type:"连读", tip:"pay range / grade = 薪资区间/薪级。Comp 护栏核心。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（Comp Demo 现场提问），填空：",
+      template:"when a manager enters a {0}, does the system show how much {1} they have left? Does it flag if they go outside the {2}?",
+      blanks:["proposed increase","budget","pay range"],
+      pool:["proposed increase","budget","pay range","proposed increment","budgets","pay grade"],
+      diagnose:"卡点：<b>proposed increase</b>、<b>pay range</b>（易混 pay grade）。客户在验证 Comp 的两个护栏：实时预算 + 薪级区间告警。"
+    },
+    sounds:[
+      {written:"comp planning worksheet", heard:"komp-PLAning-WERKshit", type:"术语", tip:"薪酬规划工作表。"},
+      {written:"how much budget they have left", heard:"hau-mʌch-BʌJit-ðei-həv-left", type:"连读", tip:"budget left = 剩余预算。"},
+      {written:"outside the pay range for that grade", heard:"autsaid-thə-pei-reinj-fər-ðət-greid", type:"连读", tip:"pay range = 薪资区间。"}
+    ],
+    shadow:[
+      "when a manager enters a proposed increase",
+      "does the system show how much budget they have left",
+      "does it flag if they go outside the pay range"
+    ],
+    globalTip:"Comp Demo 听力：客户反复验证『系统会不会实时算预算/拦截越界』。抓 budget left（剩余预算）与 pay range（薪级区间）这两个护栏词。",
+    suggest:"回应建议：确认可以（Yes, let me show you）→ 现场演示输入调薪后预算实时递减 → 演示超区间时的红色告警 → 反问是硬拦截还是仅提示。",
+    modelAnswer:"Great question — let me show you live. As the manager enters a proposed increase, you can see the remaining budget update in real time right here. And if they propose something outside the pay range for that grade, the cell turns red with a warning. We can configure whether that's a soft warning or a hard block. Which would you prefer for your rollout?"
+  },
+  {
+    speaker:{nm:'Vikram Singh', rl:'客户 IT 负责人 · 印度', av:'👨🏽💻'},
+    en:"That's neat. Now, once all the managers have submitted their proposals, how does the roll-up work? Can the HR head see the total spend across all business units in one consolidated view before approving?",
+    zh:"这很不错。那么，一旦所有经理都提交了他们的方案，汇总是怎么运作的？HR 负责人能不能在批准前，在一个合并视图里看到所有业务单元的总支出？",
+    sentences:[
+      {en:"That's neat.", zh:"这很不错。", points:[
+        {w:"neat", heard:"neet", type:"口语", tip:"neat = 不错/漂亮（口语认可）。"}
+      ]},
+      {en:"Once all the managers have submitted their proposals, how does the roll-up work?", zh:"一旦所有经理提交方案后，汇总是怎么运作的？", points:[
+        {w:"have submitted their proposals", heard:"həv-səb-MI-tid-ðer-prə-POʊ-zlz", type:"连读", tip:"submitted 重音在中；proposals = 方案。"},
+        {w:"roll-up work", heard:"roʊl-ʌp-werk", type:"术语+连读", tip:"roll-up = 逐级汇总（Comp/报表术语）。roll-up 连读。"}
+      ]},
+      {en:"Can the HR head see the total spend across all business units in one consolidated view before approving?", zh:"HR 负责人能否在批准前，在一个合并视图里看到所有业务单元的总支出？", points:[
+        {w:"total spend across all business units", heard:"TOʊ-tl-spend-ə-kros-ɔl-BIZ-nis-yu-nits", type:"连读", tip:"total spend = 总支出（Comp 关注点）；across all BU 连读。"},
+        {w:"consolidated view", heard:"kən-SO-li-dei-tid-vyu", type:"重音", tip:"consolidated = 合并的/汇总的，重音在第二音节。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户问汇总审批），填空：",
+      template:"once managers have submitted their proposals, how does the {0} work? Can the HR head see the {1} in one {2} before approving?",
+      blanks:["roll-up","total spend","consolidated view"],
+      pool:["roll-up","total spend","consolidated view","rollout","total spent","consolidated review"],
+      diagnose:"卡点：<b>roll-up</b>（易混 rollout）、<b>consolidated view</b>。客户问的是 Comp 的汇总审批流：逐级汇总→总支出→合并视图。"
+    },
+    sounds:[
+      {written:"how does the roll-up work", heard:"hau-dʌz-thə-roʊlʌp-werk", type:"连读", tip:"roll-up = 逐级汇总。"},
+      {written:"total spend across all business units", heard:"TOʊtl-spend-əkros-ɔl-BIZnis-yunits", type:"连读", tip:"total spend = 总支出。"},
+      {written:"one consolidated view", heard:"wʌn-kənSOli-deitid-vyu", type:"重音", tip:"consolidated view = 合并汇总视图。"}
+    ],
+    shadow:[
+      "once managers have submitted their proposals",
+      "how does the roll-up work",
+      "see the total spend in one consolidated view"
+    ],
+    globalTip:"Comp 汇总审批场景：抓 roll-up（逐级汇总）、total spend（总支出）、consolidated view（合并视图）——这是薪酬规划特有的审批链术语。",
+    suggest:"回应建议：确认可以→ 演示 roll-up 逐级汇总到 HR head → 展示合并视图与总支出对比预算 → 反问审批层级（几级审批）。",
+    modelAnswer:"Absolutely. Once managers submit, the proposals roll up automatically through the hierarchy. The HR head gets one consolidated view showing total spend across all business units against the overall budget — right here. They can drill into any unit before approving. Do you want a single approval at the top, or multi-level approvals along the way?"
+  },
+  {
+    speaker:{nm:'Ananya Reddy', rl:'客户薪酬经理 · 印度', av:'👩🏽💼'},
+    en:"Very useful. Last question — after the cycle is approved, how do these new salaries flow back into the employee records? Is it automatic, or do we need to trigger some kind of sync manually?",
+    zh:"非常有用。最后一个问题——在这个周期批准之后，这些新薪资是怎么回写到员工档案里的？是自动的，还是我们需要手动触发某种同步？",
+    sentences:[
+      {en:"Very useful. Last question —", zh:"非常有用。最后一个问题——", points:[
+        {w:"last question", heard:"las-KWES-chn", type:"吞音", tip:"last 的 -t 弱化。信号：最后一问。"}
+      ]},
+      {en:"after the cycle is approved, how do these new salaries flow back into the employee records?", zh:"周期批准后，这些新薪资怎么回写到员工档案里？", points:[
+        {w:"the cycle is approved", heard:"thə-SAI-kl-iz-ə-PRUVD", type:"连读", tip:"approved 重音在后。= 周期获批。"},
+        {w:"flow back into the employee records", heard:"floʊ-bak-in-tu-thi-em-PLOI-i-RE-kordz", type:"连读", tip:"flow back into = 回写到；employee records = 员工档案（EC 数据）。Comp→EC 的数据回流。"}
+      ]},
+      {en:"Is it automatic, or do we need to trigger some kind of sync manually?", zh:"是自动的，还是需要手动触发同步？", points:[
+        {w:"is it automatic", heard:"i-zit-ɔ-tə-MA-tik", type:"连读", tip:"is it 连读 /ɪzɪt/；automatic 重音在 -ma-。"},
+        {w:"trigger some kind of sync manually", heard:"TRI-gər-sʌm-kain-dəv-sink-MAN-yu-li", type:"连读", tip:"sync = 同步；kind of 连读 /kaɪndə/。客户在问集成方式。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户问薪资回写），填空：",
+      template:"after the cycle is approved, how do these new salaries {0} into the employee records? Is it {1}, or do we trigger a {2} manually?",
+      blanks:["flow back","automatic","sync"],
+      pool:["flow back","automatic","sync","float back","automated","link"],
+      diagnose:"卡点：<b>flow back</b>（回写，易混 float back）、<b>sync</b>。客户在问 Comp→EC 的集成：新薪资怎么回到员工主数据，是否自动。"
+    },
+    sounds:[
+      {written:"flow back into the employee records", heard:"floʊ-bak-intu-thi-em-PLOIi-REkordz", type:"连读", tip:"flow back into = 回写到。"},
+      {written:"is it automatic", heard:"izit-ɔtə-MAtik", type:"连读", tip:"automatic 重音在 -ma-。"},
+      {written:"trigger some kind of sync manually", heard:"TRIgər-sʌm-kaindəv-sink-MANyuli", type:"连读", tip:"sync = 同步。"}
+    ],
+    shadow:[
+      "how do these new salaries flow back into the employee records",
+      "is it automatic",
+      "or do we trigger a sync manually"
+    ],
+    globalTip:"Comp 收尾常问『数据回流/集成』：新薪资如何回写到 EC 员工档案。抓 flow back（回写）、sync（同步）、automatic——这是模块间集成的关键问题。",
+    suggest:"回应建议：说明集成方式（批准后可配置自动回写到 EC）→ 说明时点（生效日触发）→ 说明可选手动/定时 → 让客户放心数据一致。",
+    modelAnswer:"Good question. Once the cycle is approved, the new salaries can flow back into Employee Central automatically on the effective date — no manual work needed. If you prefer more control, we can also make it a scheduled or manual sync. Most clients go with automatic on the effective date to keep records consistent. Which fits your process better?"
+  }
+];
+
+SCRIPTS['comp_issue'] = [
+  {
+    speaker:{nm:'Rahul Mehta', rl:'客户薪酬运维 · 印度', av:'👨🏽🔧'},
+    en:"We've hit a problem with the comp cycle. A few managers are saying their budget numbers look wrong — the system is showing a much smaller budget than what we allocated to them. It started after we loaded the latest org changes. Could that be related?",
+    zh:"我们的薪酬周期遇到了一个问题。有几个经理反映他们的预算数字看起来不对——系统显示的预算比我们分配给他们的要小很多。这是在我们加载了最新的组织变更之后开始的。会不会跟这个有关？",
+    sentences:[
+      {en:"We've hit a problem with the comp cycle.", zh:"我们的薪酬周期遇到了一个问题。", points:[
+        {w:"we've hit a problem", heard:"wiv-hi-tə-PROB-lm", type:"连读", tip:"hit a 连读 /hɪtə/。hit a problem = 遇到问题。"}
+      ]},
+      {en:"A few managers are saying their budget numbers look wrong —", zh:"几个经理反映他们的预算数字看起来不对——", points:[
+        {w:"budget numbers look wrong", heard:"BʌJ-it-NʌM-bərz-lʊk-rɒng", type:"连读", tip:"症状核心：预算数字不对。budget = 预算。"}
+      ]},
+      {en:"the system is showing a much smaller budget than what we allocated to them.", zh:"系统显示的预算比我们分配给他们的小很多。", points:[
+        {w:"a much smaller budget", heard:"ə-mʌch-SMO-lər-BʌJ-it", type:"连读", tip:"smaller budget = 更小的预算。症状细节。"},
+        {w:"than what we allocated", heard:"ðən-wʌt-wi-A-lo-kei-tid", type:"连读", tip:"allocated = 分配（Comp 术语）。对比：显示 vs 分配。"}
+      ]},
+      {en:"It started after we loaded the latest org changes. Could that be related?", zh:"这是在我们加载了最新组织变更之后开始的。会不会跟这个有关？", points:[
+        {w:"loaded the latest org changes", heard:"loʊ-did-thə-lei-tist-ORG-cheinjiz", type:"连读", tip:"关键线索：加载了组织变更后出问题。org changes = 组织变更（EC 数据影响 Comp）。"},
+        {w:"could that be related", heard:"kʊd-ðət-bi-ri-LEI-tid", type:"连读", tip:"客户自己提供因果假设。related = 相关。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（Comp 报障），填空：",
+      template:"managers say their {0} look wrong — the system shows a smaller budget than what we {1}. It started after we loaded the latest {2}.",
+      blanks:["budget numbers","allocated","org changes"],
+      pool:["budget numbers","allocated","org changes","budget members","located","org charts"],
+      diagnose:"卡点：<b>budget numbers</b>、<b>allocated</b>（分配，易混 located）、<b>org changes</b>。排障三要素：症状（预算变小）+ 时间（加载组织变更后）——线索指向 EC→Comp 的数据联动。"
+    },
+    sounds:[
+      {written:"the budget numbers look wrong", heard:"thə-BʌJit-NʌMbərz-lʊk-rɒng", type:"连读", tip:"预算数字不对。"},
+      {written:"than what we allocated to them", heard:"ðən-wʌt-wi-Alokeitid-tə-ðem", type:"连读", tip:"allocated = 分配。"},
+      {written:"loaded the latest org changes", heard:"loʊdid-thə-leitist-ORG-cheinjiz", type:"连读", tip:"org changes = 组织变更。根因线索。"}
+    ],
+    shadow:[
+      "the budget numbers look wrong",
+      "a much smaller budget than what we allocated",
+      "it started after we loaded the latest org changes"
+    ],
+    globalTip:"Comp 排障：客户给了关键线索（加载 org changes 后预算变小）。这指向 EC（组织）与 Comp（预算）的数据联动——组织变更可能重算了预算归属。抓 budget / allocated / org changes。",
+    suggest:"回应建议：复述确认症状+线索（confirming back）→ 提出假设（org 变更导致预算按新层级重算）→ 说明排查动作 → 给时间预期。",
+    modelAnswer:"Thanks for the details — so to confirm, since loading the latest org changes, some managers see a smaller budget than allocated. That's a strong clue: when the org structure changes, Compensation can re-map budgets to the new hierarchy, so some budget may have shifted to a different node. Let me check the budget hierarchy for the affected managers right away and re-align it — I'll update you within the hour."
+  },
+  {
+    speaker:{nm:'Deepa Nair', rl:'客户项目经理 · 印度', av:'👩🏽💼'},
+    en:"Okay, please prioritise this — the comp cycle closes on Friday, so managers need the correct budgets urgently. Once you fix it, can you also confirm that no proposals were submitted against the wrong budget figures?",
+    zh:"好的，请优先处理这个——薪酬周期周五就要关闭了，所以经理们急需正确的预算。你修复之后，能不能也确认一下，没有任何方案是基于错误的预算数字提交的？",
+    sentences:[
+      {en:"Okay, please prioritise this —", zh:"好的，请优先处理这个——", points:[
+        {w:"prioritise this", heard:"prai-O-ri-taiz-thɪs", type:"重音", tip:"prioritise（英式拼写）= 优先处理。重音在第二音节。"}
+      ]},
+      {en:"the comp cycle closes on Friday, so managers need the correct budgets urgently.", zh:"薪酬周期周五关闭，经理们急需正确的预算。", points:[
+        {w:"closes on Friday", heard:"kloʊ-zi-zɒn-FRAI-dei", type:"连读", tip:"closes on 连读。deadline: Friday（周五关闭）——紧急。"},
+        {w:"need the correct budgets urgently", heard:"nid-thə-kə-REKT-BʌJ-its-ER-jənt-li", type:"重音", tip:"urgently = 紧急地。correct budgets = 正确预算。"}
+      ]},
+      {en:"Once you fix it, can you also confirm that no proposals were submitted against the wrong budget figures?", zh:"修复后，能否确认没有方案是基于错误预算数字提交的？", points:[
+        {w:"submitted against the wrong budget figures", heard:"səb-MI-tid-ə-genst-thə-rɒng-BʌJ-it-FI-gərz", type:"连读", tip:"budget figures = 预算数字；against = 基于/针对。这是要你额外核查的点。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（PM 定优先级+额外核查），填空：",
+      template:"please prioritise this — the comp cycle closes on {0}. Once you fix it, confirm that no {1} were submitted against the wrong {2}.",
+      blanks:["Friday","proposals","budget figures"],
+      pool:["Friday","proposals","budget figures","Thursday","proposers","budget features"],
+      diagnose:"卡点：<b>Friday</b>（deadline 要听准）、<b>budget figures</b>（预算数字）。PM 要两件事：① 优先修（周五前）② 额外核查是否有方案用了错误预算。"
+    },
+    sounds:[
+      {written:"please prioritise this", heard:"pliz-praiOri-taiz-thɪs", type:"重音", tip:"prioritise = 优先处理。"},
+      {written:"the comp cycle closes on Friday", heard:"thə-komp-SAIkl-kloʊzizɒn-FRAIdei", type:"连读", tip:"deadline: 周五关闭。"},
+      {written:"against the wrong budget figures", heard:"əgenst-thə-rɒng-BʌJit-FIgərz", type:"连读", tip:"budget figures = 预算数字。"}
+    ],
+    shadow:[
+      "please prioritise this the comp cycle closes on Friday",
+      "managers need the correct budgets urgently",
+      "confirm no proposals were submitted against the wrong figures"
+    ],
+    globalTip:"Comp 排障收尾：PM 加了 deadline（Friday）+ 额外核查项（有没有人用错预算提交）。听力抓时间点 + 附加动作——这决定你修完还要做什么。",
+    suggest:"回应建议：承诺优先级+时间（周五前）→ 确认修复动作 → 承诺额外核查（导出已提交方案对比预算）→ 让 PM 安心。",
+    modelAnswer:"Understood — I'll treat this as top priority given the Friday deadline. I'll re-align the budgets now so managers have the correct figures today. And yes, once fixed, I'll run a check on all submitted proposals to confirm none were entered against the wrong budget — if any were, I'll flag them for the manager to review. I'll send you a confirmation before end of day."
+  },
+  {
+    speaker:{nm:'Deepa Nair', rl:'客户项目经理 · 印度', av:'👩🏽💼'},
+    en:"Perfect. And going forward, is there a way to prevent this from happening whenever we load org changes mid-cycle? I'd rather not go through this fire drill every time.",
+    zh:"很好。另外从今往后，每次我们在周期中途加载组织变更时，有没有办法防止这种情况再发生？我实在不想每次都来这么一场救火演习。",
+    sentences:[
+      {en:"Perfect.", zh:"很好。", points:[
+        {w:"perfect", heard:"PER-fikt", type:"清晰", tip:"认可。"}
+      ]},
+      {en:"And going forward, is there a way to prevent this from happening whenever we load org changes mid-cycle?", zh:"从今往后，每次周期中途加载组织变更时，有没有办法防止再发生？", points:[
+        {w:"going forward", heard:"goʊ-ing-FOR-wərd", type:"固定表达", tip:"going forward = 今后/从现在起（商务高频）。"},
+        {w:"prevent this from happening", heard:"pri-VENT-thɪs-frəm-HA-pn-ing", type:"连读", tip:"prevent from = 防止。客户要预防措施。"},
+        {w:"load org changes mid-cycle", heard:"loʊd-ORG-cheinjiz-mid-SAI-kl", type:"连读", tip:"mid-cycle = 周期中途。触发条件。"}
+      ]},
+      {en:"I'd rather not go through this fire drill every time.", zh:"我不想每次都来这么一场救火。", points:[
+        {w:"I'd rather not", heard:"aid-ra-ðər-nɒt", type:"连读", tip:"I'd rather not = 我宁愿不/不想。委婉但明确的诉求。"},
+        {w:"fire drill", heard:"faiər-dril", type:"习语", tip:"fire drill = 救火/紧急忙乱（习语）。抓这个 = 懂客户的情绪诉求：别再手忙脚乱。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（客户要预防机制），填空：",
+      template:"going forward, is there a way to {0} this whenever we load org changes {1}? I'd rather not go through this {2} every time.",
+      blanks:["prevent","mid-cycle","fire drill"],
+      pool:["prevent","mid-cycle","fire drill","present","mid-circle","fire trial"],
+      diagnose:"卡点：<b>prevent</b>（易混 present）、<b>fire drill</b>（习语=救火忙乱）。客户诉求：给个预防机制，别每次组织变更都出乱子。"
+    },
+    sounds:[
+      {written:"going forward", heard:"goʊing-FORwərd", type:"固定表达", tip:"going forward = 今后。"},
+      {written:"prevent this from happening", heard:"priVENT-thɪs-frəm-HApning", type:"连读", tip:"prevent from = 防止。"},
+      {written:"this fire drill every time", heard:"thɪs-faiər-dril-evri-taim", type:"习语", tip:"fire drill = 救火/紧急忙乱。"}
+    ],
+    shadow:[
+      "going forward is there a way to prevent this",
+      "whenever we load org changes mid-cycle",
+      "I'd rather not go through this fire drill every time"
+    ],
+    globalTip:"客户从『修复』转向『预防』诉求，还带情绪（fire drill）。听力抓 prevent（预防）+ mid-cycle（触发条件）+ fire drill（情绪）——回应要给制度化的预防方案，安抚情绪。",
+    suggest:"回应建议：共情（I completely understand）→ 给预防机制（org 变更后自动触发预算重算校验/告警）→ 建议流程（变更前先在 test 验证）→ 承诺纳入方案。",
+    modelAnswer:"I completely understand — no one wants a fire drill every cycle. Going forward, we can set up a validation step so that whenever org changes are loaded mid-cycle, the system automatically re-checks and flags any budget mismatches before managers see them. I'd also recommend loading org changes into a test environment first during an active cycle. I'll document both as a standard process. Would that give you the peace of mind you're after?"
+  }
+];
+
+SCRIPTS['pmgm_req'] = [
+  {
+    speaker:{nm:'Priya Sharma', rl:'客户 HR 总监 · 印度', av:'👩🏽💼'},
+    en:"For the performance module, we want a continuous performance approach — not just one annual review. Managers and employees should be able to log ongoing feedback and check-ins throughout the year, and all of that should feed into the final year-end rating. Does SuccessFactors support this kind of continuous performance management?",
+    zh:"对于绩效模块，我们想要一种持续绩效的做法——而不只是一年一次的评估。经理和员工应该能够在全年记录持续的反馈和一对一沟通，而且这些都应该汇入最终的年终评分。SuccessFactors 支持这种持续绩效管理吗？",
+    sentences:[
+      {en:"For the performance module, we want a continuous performance approach —", zh:"对于绩效模块，我们想要一种持续绩效的做法——", points:[
+        {w:"continuous performance approach", heard:"kən-TI-nyu-əs-pər-FOR-məns-ə-PROʊCH", type:"重音", tip:"continuous performance = 持续绩效（PMGM 现代理念，区别于年度考核）。"}
+      ]},
+      {en:"not just one annual review.", zh:"不只是一年一次的评估。", points:[
+        {w:"annual review", heard:"AN-yu-əl-ri-VYU", type:"重音", tip:"annual review = 年度评估。review 重音在后。"}
+      ]},
+      {en:"Managers and employees should log ongoing feedback and check-ins throughout the year,", zh:"经理和员工应能全年记录持续反馈和一对一沟通，", points:[
+        {w:"ongoing feedback and check-ins", heard:"ON-goʊ-ing-FEED-bak-ən-CHEK-inz", type:"术语", tip:"check-in = 一对一沟通/进度确认（PMGM 术语）；ongoing feedback = 持续反馈。"},
+        {w:"throughout the year", heard:"thru-aut-thə-yir", type:"连读", tip:"throughout = 贯穿全年。throughout the 连读。"}
+      ]},
+      {en:"and all of that should feed into the final year-end rating.", zh:"而这些都应汇入最终的年终评分。", points:[
+        {w:"feed into the final year-end rating", heard:"fee-din-tu-thə-FAI-nl-yir-end-REI-ting", type:"连读", tip:"feed into = 汇入；year-end rating = 年终评分（PMGM 核心产出）。"}
+      ]},
+      {en:"Does SuccessFactors support this kind of continuous performance management?", zh:"SuccessFactors 支持这种持续绩效管理吗？", points:[
+        {w:"continuous performance management", heard:"kən-TI-nyu-əs-pər-FOR-məns-MA-nij-mənt", type:"重音", tip:"CPM = 持续绩效管理。客户的核心提问点。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（PMGM 需求），填空：",
+      template:"we want a {0}, not just one annual review. Managers log {1} throughout the year, and it feeds into the final {2}.",
+      blanks:["continuous performance approach","ongoing feedback","year-end rating"],
+      pool:["continuous performance approach","ongoing feedback","year-end rating","continued performance approach","ongoing feedbacks","year-end reading"],
+      diagnose:"绩效模块术语：<b>continuous performance</b>（持续绩效，非年度）、<b>ongoing feedback / check-ins</b>、<b>year-end rating</b>（年终评分）。这套术语和 EC（组织）、Comp（预算）完全不同。"
+    },
+    sounds:[
+      {written:"continuous performance approach", heard:"kənTInyuəs-pərFORməns-əPROʊCH", type:"重音", tip:"持续绩效理念。"},
+      {written:"ongoing feedback and check-ins", heard:"ONgoʊing-FEEDbak-ən-CHEKinz", type:"术语", tip:"check-in = PMGM 的一对一/进度沟通。"},
+      {written:"feed into the final year-end rating", heard:"feedintu-thə-FAInl-yirend-REIting", type:"连读", tip:"year-end rating = 年终评分。"}
+    ],
+    shadow:[
+      "we want a continuous performance approach",
+      "managers log ongoing feedback throughout the year",
+      "it feeds into the final year-end rating"
+    ],
+    globalTip:"绩效（PMGM）模块术语库：continuous performance（持续绩效）、check-in（一对一沟通）、ongoing feedback、year-end rating（年终评分）、goal（目标）。同样是需求澄清，PMGM 聊的是『绩效流程』，不同于 EC 的组织、Comp 的预算。",
+    suggest:"回应建议：确认能做（Yes）→ 点出 PMGM 的 Continuous Performance Management 功能（feedback + check-ins + activities）→ 说明如何汇入 year-end form → 反问评分是否需要 calibration。",
+    modelAnswer:"Yes, definitely. SuccessFactors supports Continuous Performance Management — managers and employees can log ongoing feedback, one-on-one check-ins, and achievements throughout the year. All of that is captured and can be pulled into the year-end review form to inform the final rating, so it's not just a once-a-year event. Would you also like those year-end ratings to go through a calibration process before they're finalised?"
+  }
+];
+
+SCRIPTS['rcm_req'] = [
+  {
+    speaker:{nm:'Priya Sharma', rl:'客户招聘负责人 · 印度', av:'👩🏽💼'},
+    en:"For recruiting, our main pain point is the approval process. Right now, before we can post a job, it has to go through several approvers — the hiring manager, finance, and HR. We want the requisition to route automatically to the right approvers based on the job's grade and department. Can the system do that?",
+    zh:"对于招聘，我们主要的痛点是审批流程。现在，在我们能发布一个职位之前，它必须经过好几个审批人——招聘经理、财务和 HR。我们希望招聘需求单能根据职位的职级和部门，自动路由给正确的审批人。系统能做到吗？",
+    sentences:[
+      {en:"For recruiting, our main pain point is the approval process.", zh:"对于招聘，我们主要痛点是审批流程。", points:[
+        {w:"main pain point", heard:"mein-pein-point", type:"术语", tip:"pain point = 痛点（商务高频）。"}
+      ]},
+      {en:"Before we can post a job, it has to go through several approvers —", zh:"在发布职位前，它必须经过好几个审批人——", points:[
+        {w:"post a job", heard:"poʊs-tə-job", type:"连读", tip:"post a 连读；post a job = 发布职位（RCM 术语）。"},
+        {w:"go through several approvers", heard:"goʊ-thru-SE-vrl-ə-PRU-vərz", type:"连读", tip:"approver = 审批人。go through = 经过。"}
+      ]},
+      {en:"the hiring manager, finance, and HR.", zh:"招聘经理、财务和 HR。", points:[
+        {w:"hiring manager", heard:"HAIə-ring-MA-ni-jər", type:"术语", tip:"hiring manager = 招聘经理（RCM 核心角色）。"}
+      ]},
+      {en:"We want the requisition to route automatically to the right approvers based on the job's grade and department.", zh:"我们希望招聘需求单能根据职位的职级和部门自动路由给正确的审批人。", points:[
+        {w:"requisition to route automatically", heard:"re-kwi-ZI-shn-tə-rut-ɔ-tə-MA-tik-li", type:"重音+术语", tip:"requisition（req）= 招聘需求单（RCM 核心单据）；route = 路由。这词很长，抓 requisition + route。"},
+        {w:"based on the job's grade and department", heard:"beis-tɒn-thə-jobz-greid-ən-di-PART-mənt", type:"连读", tip:"路由条件：职级 + 部门。based on 连读。"}
+      ]},
+      {en:"Can the system do that?", zh:"系统能做到吗？", points:[
+        {w:"do that", heard:"du-ðat", type:"清晰", tip:"客户的核心提问。"}
+      ]}
+    ],
+    quiz:{
+      q:"听这段（RCM 需求），填空：",
+      template:"before we can post a job, it goes through several {0}. We want the {1} to route automatically based on the job's {2}.",
+      blanks:["approvers","requisition","grade and department"],
+      pool:["approvers","requisition","grade and department","approval","recognition","grade and apartment"],
+      diagnose:"招聘模块术语：<b>approvers</b>（审批人）、<b>requisition</b>（招聘需求单，长词易懵）、<b>grade and department</b>（路由条件）。RCM 聊的是招聘流程/单据，术语又是一套新的。"
+    },
+    sounds:[
+      {written:"go through several approvers", heard:"goʊ-thru-SEvrl-əPRUvərz", type:"连读", tip:"approver = 审批人。"},
+      {written:"the requisition to route automatically", heard:"rekwiZIshn-tə-rut-ɔtəMAtikli", type:"重音", tip:"requisition = 招聘需求单（RCM 核心）。"},
+      {written:"based on the job's grade and department", heard:"beistɒn-thə-jobz-greid-ən-diPARTmənt", type:"连读", tip:"路由条件：职级+部门。"}
+    ],
+    shadow:[
+      "before we can post a job it goes through several approvers",
+      "we want the requisition to route automatically",
+      "based on the job's grade and department"
+    ],
+    globalTip:"招聘（RCM）模块术语库：requisition（招聘需求单）、approver（审批人）、post a job（发布职位）、hiring manager、candidate（候选人）。同样是需求澄清，RCM 聊的是招聘流程与审批路由——第四套术语体系。",
+    suggest:"回应建议：确认能做（Yes）→ 点出 RCM 的审批流可按规则配置（job requisition approval workflow）→ 说明可按 grade/department 动态路由 → 反问审批是串行还是并行。",
+    modelAnswer:"Yes, that's a very common requirement. In SuccessFactors Recruiting, the job requisition approval workflow is fully configurable — you can set it to route automatically to the right approvers based on the job's grade, department, or other fields. So a senior finance role could go to different approvers than a junior one. Do you want the approvals to happen in sequence, or in parallel to speed things up?"
+  }
+];
+
+// return the script for the current scenario (fallback to req if none authored yet)
+function scriptKey(m, sc){ return m+'_'+sc; }
+function hasScript(m, sc){ return !!SCRIPTS[scriptKey(m,sc)]; }
+function curScript(){ return SCRIPTS[scriptKey(S.module, S.scn)] || SCRIPTS['ec_req']; }
+// Build the current turn adapted to the selected accent.
+// A turn may carry byAccent:{us:{sounds,globalTip,pts:{0:[...],1:[...]}}, gb:{...}, au:{...}}.
+// Missing accent overrides fall back to the base (India) content.
+function curTurn(){
+  const base = curScript()[S.turn];
+  const ov = base.byAccent && base.byAccent[S.accent];
+  if(!ov) return base;
+  const merged = Object.assign({}, base);
+  if(ov.sounds) merged.sounds = ov.sounds;
+  if(ov.globalTip) merged.globalTip = ov.globalTip;
+  if(ov.pts && base.sentences){
+    merged.sentences = base.sentences.map(function(st,i){
+      return ov.pts[i] ? Object.assign({}, st, {points: ov.pts[i]}) : st;
+    });
+  }
+  return merged;
+}
+
+
+// ============ STATE ============
+const S = {accent:'in', module:'ec', scn:'req', turn:0, stage:'listen', path:null, helpSub:0, speed:1, selfLevel:null, myAnswer:'', quizFills:[], quizChecked:false, started:false};
+const HELP_SUBS = ['locate','sound','lib','shadow'];
+let synth = window.speechSynthesis; let voices = [];
+function loadVoices(){ voices = synth ? synth.getVoices() : []; }
+if(synth){ loadVoices(); synth.onvoiceschanged = loadVoices; }
+
+// ============ RENDER SETUP ============
+function renderAccents(){
+  // an accent has "tailored" listening-decode if the current script authored byAccent for it
+  // (India is always the base content; others need explicit byAccent overrides)
+  const sc = curScript();
+  function tailored(id){
+    if(id==='in') return true;
+    return !!(sc && sc[0] && sc[0].byAccent && sc[0].byAccent[id]);
+  }
+  document.getElementById('accentChips').innerHTML = ACCENTS.map(a=>`
+    <button class="chip ${a.id===S.accent?'active':''}" data-a="${a.id}">
+      <span class="flag">${a.flag}</span> ${a.name}
+      <span class="diff ${a.hard?'hard':''}">${a.diff}</span>
+      ${tailored(a.id)?'<span class="diff" style="background:#ecfdf5;color:#0f9d58">✨专属拆解</span>':''}
+    </button>`).join('');
+  document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{S.accent=b.dataset.a;renderAccents();syncSel();});
+  const note=document.getElementById('accentNote');
+  if(note){
+    const m=MODULES.find(x=>x.id===S.module), s=SCENARIOS.find(x=>x.id===S.scn);
+    note.innerHTML = '标 <b style="color:#0f9d58">✨专属拆解</b> 的口音，已为当前「'+(m?m.ab:'')+' × '+(s?s.name:'')+'」定制了该口音的连读/弱读/元音拆解；其余口音会切换语音朗读，听感拆解暂沿用通用版。';
+  }
+}
+function renderModules(){
+  document.getElementById('moduleChips').innerHTML = MODULES.map(m=>`
+    <button class="mchip ${m.id===S.module?'active':''} ${m.ready?'':'soon'}" data-m="${m.id}">
+      <span class="ab">${m.ab}</span>
+      <span class="mn">${m.name}<small>${m.zh}</small></span>
+      ${m.ready?'':'<span class="st">即将上线</span>'}
+    </button>`).join('');
+  document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+    const m=MODULES.find(x=>x.id===b.dataset.m);
+    if(!m.ready){ alert('「'+m.name+'（'+m.ab+'）」模块即将上线 🚧\n\n本次原型先做了 EC（组织人事）与 Comp（薪酬）两个模块的内容示范，\n用于展示"同一场景 × 不同模块"的业务差异。'); return; }
+    S.module=b.dataset.m;
+    // if current scenario has no script for this module, fall back to the first scenario that does
+    if(!hasScript(S.module, S.scn)){
+      const first=SCENARIOS.find(sc=>hasScript(S.module, sc.id));
+      if(first) S.scn=first.id;
+    }
+    renderModules(); renderScns(); renderAccents(); syncSel();
+  });
+}
+function renderScns(){
+  document.getElementById('scnGrid').innerHTML = SCENARIOS.map(s=>`
+    <button class="scn ${s.id===S.scn?'active':''}" data-s="${s.id}">
+      <span class="tag ${hasScript(S.module,s.id)?'ready':'soon'}">${hasScript(S.module,s.id)?'可体验':'即将上线'}</span>
+      <div class="ic">${s.ic}</div>
+      <h3>${s.name}</h3>
+      <p>${s.desc}</p>
+    </button>`).join('');
+  document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+    const s=SCENARIOS.find(x=>x.id===b.dataset.s);
+    const mod=MODULES.find(x=>x.id===S.module);
+    if(!hasScript(S.module, s.id)){ alert('「'+mod.ab+' × '+s.name+'」组合即将上线 🚧\n\n当前模块（'+mod.ab+'）下可体验的场景已高亮为"可体验"。'); return; }
+    S.scn=b.dataset.s;renderScns();renderAccents();syncSel();
+  });
+}
+function syncSel(){
+  const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
+  document.getElementById('selAccent').textContent=a.name;
+  document.getElementById('selModule').textContent=m.name;
+  document.getElementById('selScn').textContent=s.name;
+}
+
+// ============ SESSION FLOW ============
+function startSession(){
+  Object.assign(S,{started:true,turn:0,stage:'listen',path:null,helpSub:0,speed:1,selfLevel:null,myAnswer:'',quizFills:[],quizChecked:false});
+  const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
+  document.getElementById('sPillAccent').textContent=a.flag+' '+a.name;
+  document.getElementById('sPillModule').textContent='🧩 '+m.ab;
+  document.getElementById('sPillScn').textContent=s.ic+' '+s.name;
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('session').classList.remove('hidden');
+  const gf=document.getElementById('globalFoot'); gf.style.display='block';
+  gf.innerHTML='🎙️ 提示：语音朗读用浏览器合成（口音效果取决于系统语音包）；口语/跟读需麦克风权限，不支持时可打字。评分为原型模拟。';
+  renderTurn();
+}
+function exitSession(){
+  if(synth) synth.cancel();
+  S.started=false;
+  document.getElementById('session').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+  document.getElementById('globalFoot').style.display='none';
+}
+function setSteps(stage){
+  const order=['listen','help','speak','feedback']; const idx=order.indexOf(stage);
+  document.querySelectorAll('#stepBar .step').forEach((el,i)=>{ el.className='step'+(i<idx?' done':i===idx?' now':''); });
+}
+function setTurnNum(){ document.getElementById('sTurnNum').textContent=S.turn+1; }
+
+function renderTurn(){
+  setTurnNum(); setSteps(S.stage);
+  const d=curTurn(); const area=document.getElementById('turnArea');
+  if(S.stage==='listen') area.innerHTML=viewListen(d);
+  else if(S.stage==='help') area.innerHTML=viewHelp(d);
+  else if(S.stage==='speak') area.innerHTML=viewSpeak(d);
+  else if(S.stage==='feedback') area.innerHTML=viewFeedback(d);
+  bindTurn(d);
+}
+
+// ---- STAGE 1: LISTEN ----
+function viewListen(d){
+  return `
+  <div class="stage-label stage-listen">🎧 第一步 · 听力</div>
+  <div class="speaker"><div class="avatar">${d.speaker.av}</div>
+    <div><div class="nm">${d.speaker.nm}</div><div class="rl">${d.speaker.rl}</div></div></div>
+  <div class="player">
+    <button class="play-btn" id="playBtn">▶</button>
+    <div class="wave" id="wave">${'<span></span>'.repeat(28)}</div>
+    <div class="speed-ctrl">
+      <button class="speed-btn ${S.speed===0.7?'active':''}" data-sp="0.7">0.7×</button>
+      <button class="speed-btn ${S.speed===1?'active':''}" data-sp="1">1×</button>
+    </div>
+  </div>
+  <div class="hint-row">
+    <button class="hint-btn" id="replayBtn"><span class="em">🔁</span> 重播</button>
+    <button class="hint-btn" id="slowBtn"><span class="em">🐢</span> 慢速重播</button>
+  </div>
+  <div class="selfcheck">
+    <h4>👂 先自测：这段你听懂了多少？<span style="font-weight:500;color:var(--text-2);font-size:12px">（决定下一步辅导强度）</span></h4>
+    <div class="scale">
+      <button class="scale-btn ${S.selfLevel==='low'?'sel':''}" data-lv="low"><span class="big">😕</span>完全听不懂</button>
+      <button class="scale-btn ${S.selfLevel==='mid'?'sel':''}" data-lv="mid"><span class="big">🤔</span>基本听懂</button>
+      <button class="scale-btn ${S.selfLevel==='high'?'sel':''}" data-lv="high"><span class="big">🙂</span>完全听懂</button>
+    </div>
+    <div id="pathHint" style="font-size:12.5px;color:var(--accent-dark);margin-top:11px;min-height:18px">${pathHintText()}</div>
+  </div>
+  <div class="actions">
+    <button class="btn-accent" id="toHelp" ${S.selfLevel?'':'disabled style=\"opacity:.45;cursor:not-allowed\"'}>${toHelpLabel()}</button>
+  </div>`;
+}
+function pathHintText(){
+  if(S.selfLevel==='low') return '→ 将进入<b>逐句练习</b>模式：每句都拆解、跟读，从基础打起。';
+  if(S.selfLevel==='mid') return '→ 将聚焦<b>关键词/关键句</b>：定位卡点 → 听感拆解 → 影子跟读。';
+  if(S.selfLevel==='high') return '→ 直接<b>揭示完整原文 + 中文</b>做验证。';
+  return '👆 请先选一项——系统会据此决定给你多深的辅导。';
+}
+function toHelpLabel(){
+  if(S.selfLevel==='high') return '✅ 看原文验证 →';
+  if(!S.selfLevel) return '🧩 请先自测';
+  return '🧩 帮我听懂 →';
+}
+
+// ---- STAGE 2: HELP / DECODE (UPGRADED, 4 sub-steps) ----
+// path-aware sub-step definitions
+function helpSteps(){
+  if(S.path==='low')  return [['1','逐句练习'],['2','定位填词'],['3','完整原文']];
+  if(S.path==='high') return [['1','完整原文验证']];
+  return [['1','定位卡点'],['2','听感拆解'],['3','影子跟读'],['4','完整原文']]; // mid (default)
+}
+function helpLast(){ return helpSteps().length-1; }
+function subNav(){
+  const labels=helpSteps();
+  if(labels.length<=1) return ''; // high: no nav needed
+  return `<div class="substeps">${labels.map((l,i)=>`
+    <div class="substep ${i===S.helpSub?'active':i<S.helpSub?'done':''}" data-sub="${i}">
+      <span class="n">${l[0]}</span>${l[1]}</div>`).join('')}</div>`;
+}
+function viewHelp(d){
+  const last=helpLast();
+  const headTxt = S.path==='low' ? '🐢 逐句攻克 · 每句都拆解、跟读，从基础打起'
+                : S.path==='high' ? '✅ 完整原文验证 · 对照检验你是否真的听懂'
+                : '🎯 聚焦关键难点 · 定位卡点 → 听感拆解 → 跟读';
+  return `
+  <div class="stage-label stage-help">🧩 第二步 · 帮你听懂</div>
+  <div class="decode">
+    <div class="decode-head">${headTxt}</div>
+    ${subNav()}
+    <div class="decode-body" id="helpBody">${renderHelpSub(d)}</div>
+  </div>
+  <div class="actions">
+    ${S.helpSub>0?`<button class="btn-ghost" id="subPrev">← 上一步</button>`:`<button class="btn-ghost" id="backListen">← 重选自测</button>`}
+    ${S.helpSub<last
+      ? `<button class="btn-accent" id="subNext">下一步 →</button>`
+      : `<button class="btn-primary" id="toSpeak">✅ 听懂了，去回应 →</button>`}
+  </div>`;
+}
+function renderHelpSub(d){
+  if(S.path==='low'){
+    if(S.helpSub===0) return subSentences(d);
+    if(S.helpSub===1) return subLocate(d, true);
+    return subReveal(d);
+  }
+  if(S.path==='high'){
+    return subReveal(d);
+  }
+  // mid (default)
+  if(S.helpSub===0) return subLocate(d);
+  if(S.helpSub===1) return subSound(d);
+  if(S.helpSub===2) return subShadow(d);
+  if(S.helpSub===3) return subReveal(d);
+}
+
+// SUB (low path): every sentence listed, each with listen/slow/decode/shadow
+function subSentences(d){
+  return `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">
+      整段拆成 ${d.sentences.length} 句。<b>逐句攻破</b>：🔊听 → 🐢慢速 → 🧩看这句的连读/弱读难点 → 🀄核对中文 → 🎤跟读。想练几遍练几遍。
+    </div>
+    ${d.sentences.map((st,i)=>`
+      <div class="sent-card">
+        <span class="sent-idx">第 ${i+1} 句 / ${d.sentences.length}</span>
+        <div class="sent-en">${st.en}</div>
+        <div class="sent-zh" id="sentZh${i}">${st.zh}</div>
+        <div class="sent-ctrls">
+          <button class="sent-btn" data-sent-play="${i}" data-rate="1">🔊 听</button>
+          <button class="sent-btn" data-sent-play="${i}" data-rate="0.6">🐢 慢速</button>
+          <button class="sent-btn" data-sent-decode="${i}">🧩 听感拆解</button>
+          <button class="sent-btn" data-sent-zh="${i}">🀄 显示中文</button>
+          <button class="sent-btn rec" data-sent-rec="${i}">🎤 跟读</button>
+          <span class="shadow-score hidden" id="sentScore${i}"></span>
+        </div>
+        <div class="sent-decode" id="sentDecode${i}">
+          ${(st.points||[]).map((pt,pi)=>`
+            <div class="spt">
+              <span class="w">${pt.w}</span>
+              <span class="arr">→ 听到</span>
+              <span class="hd">${pt.heard}</span>
+              <span class="ty">${pt.type}</span>
+              <button class="pl" data-spt="${i}-${pi}">🔊</button>
+              <div class="spt-tip">💡 ${pt.tip}</div>
+            </div>`).join('')}
+        </div>
+        <div class="sent-heard" id="sentHeard${i}"></div>
+      </div>`).join('')}
+    <div class="decode-tip" style="background:var(--accent-soft);margin-top:14px">
+      <span class="em">🎯</span><div><b>策略：</b>${d.globalTip}</div></div>
+  `;
+}
+
+// SUB 1: locate where you got stuck (gap-fill)
+function subLocate(d, asCheck){
+  const q=d.quiz;
+  // build sentence with gaps
+  let html = q.template;
+  q.blanks.forEach((b,i)=>{
+    const filled = S.quizFills[i];
+    const cls = S.quizChecked ? (filled===b?'correct':'wrong') : (filled?'filled':'');
+    html = html.replace('{'+i+'}', `<span class="gap ${cls}" data-gap="${i}">${filled||'____'}</span>`);
+  });
+  // shuffle pool once per turn
+  if(!S._pool || S._poolTurn!==S.turn){ S._pool=[...q.pool].sort(()=>Math.random()-.5); S._poolTurn=S.turn; }
+  const used = S.quizFills.filter(Boolean);
+  const pool = S._pool.map(o=>`<button class="opt ${used.includes(o)?'used':''}" data-opt="${o}">${o}</button>`).join('');
+  return `
+    <div class="player" style="margin-bottom:14px">
+      <button class="play-btn sm" id="playBtn">▶</button>
+      <div class="wave" id="wave">${'<span></span>'.repeat(24)}</div>
+      <div class="speed-ctrl">
+        <button class="speed-btn" data-sp="0.7">0.7×</button>
+        <button class="speed-btn active" data-sp="1">1×</button></div>
+    </div>
+    <div class="quiz-q">${asCheck ? '✅ <b>检验一下：</b>刚才逐句练完了，现在不看原文，把听到的关键词填进空格，看看是不是真的能听出来了：' : q.q}</div>
+    <div class="quiz-sentence">${html}</div>
+    <div class="opt-pool">${pool}</div>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn-ghost" id="quizReset" style="padding:9px 16px">重填</button>
+      <button class="btn-accent" id="quizCheck" style="padding:9px 18px">对答案</button>
+    </div>
+    ${S.quizChecked?`<div class="quiz-result diag"><b>🔎 诊断：</b>${q.diagnose}</div>`:''}
+  `;
+}
+
+// SUB 2: sound linking / reduction
+function subSound(d){
+  return `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">
+      同一句话，<b>书面文字</b>和你<b>实际听到的音</b>差很远——这就是听不懂的根源。点 🔊 对比慢速 / 正常速：
+    </div>
+    ${d.sounds.map((s,i)=>`
+      <div class="sound-card">
+        <span class="sound-type">${s.type}</span>
+        <div class="sound-top">
+          <span class="sound-written">${s.written}</span>
+          <span class="sound-arrow">→ 实际听到</span>
+          <span class="sound-heard">${s.heard}</span>
+          <div class="sound-play">
+            <button class="mini-play slow" data-sound="${i}" data-rate="0.6">🐢</button>
+            <button class="mini-play" data-sound="${i}" data-rate="1">🔊</button>
+          </div>
+        </div>
+        <div class="sound-tip">${s.tip}</div>
+      </div>`).join('')}
+    <div class="decode-tip" style="background:var(--accent-soft);margin-top:14px">
+      <span class="em">🎯</span><div><b>策略：</b>${d.globalTip}</div></div>
+  `;
+}
+
+// SUB 4: reveal the full transcript (English + Chinese)
+function subReveal(d){
+  return `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">
+      现在你已经拆解并跟读过难点，<b>对照完整原文</b>再听一遍，检验是不是真的听懂了：
+    </div>
+    <div class="player" style="margin-bottom:14px">
+      <button class="play-btn sm" id="playBtn">▶</button>
+      <div class="wave" id="wave">${'<span></span>'.repeat(24)}</div>
+      <div class="speed-ctrl">
+        <button class="speed-btn" data-sp="0.7">0.7×</button>
+        <button class="speed-btn active" data-sp="1">1×</button></div>
+    </div>
+    <div class="reveal-full">
+      <div class="lbl">📄 完整原文（English）</div>
+      <div class="full-en">${d.en}</div>
+    </div>
+    <div class="reveal-full" style="border-color:var(--primary);margin-top:12px">
+      <div class="lbl" style="color:var(--primary)">🀄 中文意思</div>
+      <div class="full-zh" style="font-size:14px;color:var(--text)">${d.zh}</div>
+    </div>
+    <div class="decode-tip" style="background:var(--accent-soft);margin-top:14px">
+      <span class="em">🎯</span><div><b>听力策略：</b>${d.globalTip}</div></div>
+  `;
+}
+
+// SUB 4: shadowing
+function subShadow(d){
+  return `
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">
+      <b>影子跟读</b>：听一句，立刻跟着复述。练听力的同时练发音节奏——这是母语者练口音最有效的方法。
+    </div>
+    ${d.shadow.map((line,i)=>`
+      <div class="shadow-line">
+        <div class="shadow-en">${line}</div>
+        <div class="shadow-ctrls">
+          <button class="mini-play" data-shadow-play="${i}" style="width:38px;height:38px">🔊</button>
+          <button class="mini-play slow" data-shadow-play="${i}" data-rate="0.7" style="width:38px;height:38px">🐢</button>
+          <button class="shadow-rec" data-shadow-rec="${i}"><span>🎤</span> 跟读</button>
+          <span class="shadow-score hidden" id="shScore${i}"></span>
+        </div>
+        <div class="shadow-heard" id="shHeard${i}"></div>
+      </div>`).join('')}
+    <div class="decode-tip" style="margin-top:14px"><span class="em">💡</span>
+      <div>跟读技巧：<b>不要等整句放完</b>，几乎和语音同步开口（延迟半秒），模仿语调和连读，别逐字咬清。</div></div>
+  `;
+}
+
+// ---- STAGE 3: SPEAK ----
+function viewSpeak(d){
+  return `
+  <div class="stage-label stage-speak">🗣️ 第三步 · 口语回应</div>
+  <div class="speaker"><div class="avatar">${d.speaker.av}</div>
+    <div><div class="nm">${d.speaker.nm}</div><div class="rl">${d.speaker.rl}</div></div></div>
+  <div class="suggest"><span class="em">🧭</span><div><b>怎么回应：</b>${d.suggest}</div></div>
+  <div class="rec-zone">
+    <button class="mic-btn" id="micBtn">🎤</button>
+    <div class="rec-hint" id="recHint">点击麦克风开始说 · 或在下方打字</div>
+    <div class="playback" id="playbackBox" style="display:none">
+      <button class="pb-btn" id="pbBtn">▶ 回放我的录音</button>
+      <span class="pb-time" id="pbTime"></span>
+      <audio id="myAudio" style="display:none"></audio>
+    </div>
+    <textarea class="type-fallback" id="typeBox" placeholder="也可以直接输入你的英文回应…">${S.myAnswer}</textarea>
+    <div class="my-answer" id="myAnswerBox" style="display:${S.myAnswer?'block':'none'}">
+      <div class="lbl">识别到的你的回应（可在上方文本框修改）</div><div class="txt" id="myAnswerTxt">${S.myAnswer}</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn-ghost" id="backHelp">← 返回帮你听懂</button>
+    <button class="btn-primary" id="toFeedback">提交，获取反馈 →</button>
+  </div>`;
+}
+
+// ---- STAGE 4: FEEDBACK ----
+function ring(pct,color){
+  const r=24,c=2*Math.PI*r,off=c*(1-pct/100);
+  return `<svg width="56" height="56" viewBox="0 0 56 56">
+    <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--border)" stroke-width="5"/>
+    <circle cx="28" cy="28" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"
+      transform="rotate(-90 28 28)"/></svg>`;
+}
+function viewFeedback(d){
+  const sc={pron:82,gram:75,express:70,fluency:78};
+  return `
+  <div class="stage-label stage-feedback">✅ 第四步 · 反馈与纠正</div>
+  <div class="fb-scores">
+    <div class="fb-score"><div class="ring">${ring(sc.pron,'var(--error)')}<div class="num">${sc.pron}</div></div><div class="lbl">发音</div></div>
+    <div class="fb-score"><div class="ring">${ring(sc.gram,'var(--warn)')}<div class="num">${sc.gram}</div></div><div class="lbl">语法/用词</div></div>
+    <div class="fb-score"><div class="ring">${ring(sc.express,'var(--primary)')}<div class="num">${sc.express}</div></div><div class="lbl">地道表达</div></div>
+    <div class="fb-score"><div class="ring">${ring(sc.fluency,'var(--success)')}<div class="num">${sc.fluency}</div></div><div class="lbl">流利度</div></div>
+  </div>
+  <div class="fb-block pron"><h4>🔴 发音纠正（优先）</h4>
+    <div class="fb-item">• <span class="word">calibrated</span> 重音在第一音节：<span class="now">/ˈkæl.ɪ.breɪ.tɪd/</span>，注意 <b>-brat-</b> 不要读成 -bright-。</div>
+    <div class="fb-item">• <span class="word">business units</span> 的 <b>-ness</b> 读得偏重，商务口语中应轻读带过。</div>
+  </div>
+  <div class="fb-block gram"><h4>🟠 语法 / 用词修正（优先）</h4>
+    <div class="fb-item">• <span class="was">SuccessFactors can do the goal cascade</span> → <span class="now">SuccessFactors supports goal cascading</span></div>
+    <div class="fb-item">• <span class="was">we will make the calibration</span> → <span class="now">we'll configure / run calibration sessions</span></div>
+  </div>
+  <div class="fb-block express"><h4>🔵 更地道的商务表达建议（优先）</h4>
+    <div class="fb-item">• 确认需求时，比起 "Do you mean…?"，试试 <span class="now">"Just to make sure I've got this right — you'd like…?"</span></div>
+    <div class="fb-item">• 参考范例回应：<br><span style="display:block;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:6px;font-size:13px;line-height:1.55">"${d.modelAnswer}"</span></div>
+  </div>
+  <div class="fb-block good"><h4>🟢 做得好</h4>
+    <div class="fb-item">• 回应结构清晰（先确认→点功能→反问）👍</div>
+    <div class="fb-item">• 抓住了客户的核心提问点。</div>
+  </div>
+  <div class="actions">
+    ${S.turn < curScript().length-1
+      ? `<button class="btn-primary" id="nextTurn">下一回合 · 客户继续说 →</button>`
+      : `<button class="btn-primary" id="finishSess">🎉 完成这段对话</button>`}
+    <button class="btn-ghost" id="retrySpeak">重新回应这一句</button>
+  </div>`;
+}
+
+// ============ AUDIO ============
+function speak(text, rate){
+  if(!synth) return;
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate = rate || S.speed || 1;
+  const hints=(ACCENTS.find(a=>a.id===S.accent)||{}).voiceHint||['en-US'];
+  let v=null;
+  for(const h of hints){ v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith(h.toLowerCase())); if(v)break; }
+  if(!v) v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith('en'));
+  if(v) u.voice=v;
+  const wave=document.getElementById('wave'), btn=document.getElementById('playBtn');
+  u.onstart=()=>{ if(wave)wave.classList.add('active'); if(btn){btn.classList.add('playing');btn.textContent='⏸';} };
+  u.onend=()=>{ if(wave)wave.classList.remove('active'); if(btn){btn.classList.remove('playing');btn.textContent='▶';} };
+  synth.speak(u);
+}
+function togglePlay(text){
+  const btn=document.getElementById('playBtn');
+  if(synth && synth.speaking){ synth.cancel(); if(btn){btn.classList.remove('playing');btn.textContent='▶';} const w=document.getElementById('wave'); if(w)w.classList.remove('active'); }
+  else speak(text);
+}
+
+// ============ SPEECH RECOGNITION ============
+function initRecog(lang){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return null;
+  const r=new SR(); r.lang=lang||'en-US'; r.interimResults=true; r.continuous=false;
+  return r;
+}
+let recog=null, recActive=false;
+let mediaRec=null, mediaStream=null, audioChunks=[];
+
+// Recording is the PRIMARY driver. Speech recognition is a best-effort add-on that
+// never blocks or interrupts recording (it often fails under file:// — that's fine).
+function toggleRec(){
+  var btn=document.getElementById('micBtn'), hint=document.getElementById('recHint'), box=document.getElementById('typeBox');
+  if(recActive){ stopRec(btn, hint); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    hint.textContent='此环境不支持录音（需 HTTPS 或用 Chrome/Edge 打开）。可直接在下方打字。'; return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    mediaStream=stream; audioChunks=[];
+    // start recorder
+    try{
+      mediaRec=new MediaRecorder(stream);
+      mediaRec.ondataavailable=function(e){ if(e.data && e.data.size>0) audioChunks.push(e.data); };
+      mediaRec.onstop=function(){
+        try{
+          var blob=new Blob(audioChunks,{type:(audioChunks[0]&&audioChunks[0].type)||'audio/webm'});
+          var url=URL.createObjectURL(blob);
+          var au=document.getElementById('myAudio'), pbBox=document.getElementById('playbackBox');
+          if(au&&pbBox){ au.src=url; pbBox.style.display='inline-flex'; }
+        }catch(e){}
+        if(mediaStream){ mediaStream.getTracks().forEach(function(t){t.stop();}); mediaStream=null; }
+      };
+      mediaRec.start();
+    }catch(e){ hint.textContent='录音启动失败：'+e.message+'。可直接打字。'; }
+    // best-effort recognition (may silently fail on file://)
+    startRecognitionSafe(box);
+    // UI: recording
+    recActive=true; btn.classList.add('recording'); btn.textContent='⏹';
+    hint.textContent='🔴 录音中…（再次点击停止）· 说完可回放对比';
+  }).catch(function(err){
+    hint.textContent='没拿到麦克风权限（'+err.name+'）。请在地址栏允许麦克风，或直接打字。';
+  });
+}
+
+function stopRec(btn, hint){
+  try{ if(mediaRec && mediaRec.state!=='inactive') mediaRec.stop(); }catch(e){}
+  try{ if(recog) recog.stop(); }catch(e){}
+  recActive=false;
+  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤'; }
+  if(hint) hint.textContent='已停止 · 点▶回放你的录音 · 识别不到可直接打字修改';
+}
+
+function startRecognitionSafe(box){
+  try{
+    if(!recog) recog=initRecog('en-US');
+    if(!recog) return;  // browser doesn't support it — silently skip, recording still works
+    var finalTxt='';
+    recog.onresult=function(e){ var interim='';
+      for(var k=e.resultIndex;k<e.results.length;k++){ var tt=e.results[k][0].transcript; if(e.results[k].isFinal){ finalTxt+=tt; } else { interim+=tt; } }
+      if(box){ box.value=(finalTxt+interim).trim(); S.myAnswer=box.value; showMyAnswer(); }
+    };
+    // swallow recognition errors — do NOT interrupt recording or nag the user
+    recog.onerror=function(e){ /* no-speech / network / not-allowed under file:// — ignore */ };
+    recog.onend=function(){ /* recognition ended; recording continues until user stops */ };
+    recog.start();
+  }catch(e){ /* recognition unavailable — fine, recording is primary */ }
+}
+
+// playback of the user's own recording
+function togglePlayback(){
+  const au=document.getElementById('myAudio'), btn=document.getElementById('pbBtn'), tEl=document.getElementById('pbTime');
+  if(!au || !au.src) return;
+  if(au.paused){
+    au.play();
+    btn.textContent='⏸ 暂停';
+    au.ontimeupdate=()=>{ if(tEl) tEl.textContent=au.currentTime.toFixed(1)+'s'; };
+    au.onended=()=>{ btn.textContent='▶ 回放我的录音'; };
+  } else { au.pause(); btn.textContent='▶ 回放我的录音'; }
+}
+// playback of the user's own recording
+function togglePlayback(){
+  const au=document.getElementById('myAudio'), btn=document.getElementById('pbBtn'), tEl=document.getElementById('pbTime');
+  if(!au || !au.src) return;
+  if(au.paused){
+    au.play();
+    btn.textContent='⏸ 暂停';
+    au.ontimeupdate=()=>{ if(tEl) tEl.textContent=au.currentTime.toFixed(1)+'s'; };
+    au.onended=()=>{ btn.textContent='▶ 回放我的录音'; };
+  } else { au.pause(); btn.textContent='▶ 回放我的录音'; }
+}
+function showMyAnswer(){
+  const b=document.getElementById('myAnswerBox'), t=document.getElementById('myAnswerTxt');
+  if(b&&t){ if(S.myAnswer){ b.style.display='block'; t.textContent=S.myAnswer; } else b.style.display='none'; }
+}
+
+// shadowing recognition (per line)
+let shRecog=null, shActive=-1;
+function toggleShadowRec(idx, target){
+  const btn=document.querySelector(`[data-shadow-rec="${idx}"]`);
+  const scoreEl=document.getElementById('shScore'+idx), heardEl=document.getElementById('shHeard'+idx);
+  if(!shRecog) shRecog=initRecog('en-US');
+  if(!shRecog){ heardEl.textContent='⚠️ 浏览器不支持语音识别'; return; }
+  if(shActive===idx){ shRecog.stop(); return; }
+  let finalTxt='';
+  shRecog.onstart=()=>{ shActive=idx; btn.classList.add('recording'); btn.innerHTML='<span>⏹</span> 停止'; heardEl.textContent='🔴 听你跟读…'; };
+  shRecog.onresult=(e)=>{ finalTxt=''; for(let i=0;i<e.results.length;i++) finalTxt+=e.results[i][0].transcript; heardEl.textContent='你说的：'+finalTxt; };
+  shRecog.onerror=(e)=>{ heardEl.textContent='⚠️ '+e.error; };
+  shRecog.onend=()=>{
+    btn.classList.remove('recording'); btn.innerHTML='<span>🎤</span> 跟读'; shActive=-1;
+    // crude similarity score
+    const sim=similarity(finalTxt.toLowerCase().trim(), target.toLowerCase().trim());
+    const pct=Math.round(sim*100);
+    scoreEl.classList.remove('hidden','good','mid');
+    scoreEl.classList.add(pct>=70?'good':'mid');
+    scoreEl.textContent=(pct>=70?'✓ 吻合 ':'~ 吻合 ')+pct+'%';
+  };
+  try{ shRecog.start(); }catch(err){}
+}
+function similarity(a,b){
+  if(!a) return 0;
+  const wa=a.split(/\s+/), wb=b.split(/\s+/);
+  let hit=0; wb.forEach(w=>{ if(wa.includes(w)) hit++; });
+  return Math.min(1, hit/Math.max(1,wb.length));
+}
+
+// per-sentence shadow recognition (low path)
+let sentRecog=null, sentActive=-1;
+function toggleSentRec(idx, target, btn){
+  const scoreEl=document.getElementById('sentScore'+idx), heardEl=document.getElementById('sentHeard'+idx);
+  if(!sentRecog) sentRecog=initRecog('en-US');
+  if(!sentRecog){ if(heardEl)heardEl.textContent='⚠️ 浏览器不支持语音识别'; return; }
+  if(sentActive===idx){ sentRecog.stop(); return; }
+  let finalTxt='';
+  sentRecog.onstart=()=>{ sentActive=idx; btn.classList.add('recording'); btn.textContent='⏹ 停止'; if(heardEl)heardEl.textContent='🔴 听你跟读…'; };
+  sentRecog.onresult=(e)=>{ finalTxt=''; for(let i=0;i<e.results.length;i++) finalTxt+=e.results[i][0].transcript; if(heardEl)heardEl.textContent='你说的：'+finalTxt; };
+  sentRecog.onerror=(e)=>{ if(heardEl)heardEl.textContent='⚠️ '+e.error; };
+  sentRecog.onend=()=>{
+    btn.classList.remove('recording'); btn.textContent='🎤 跟读'; sentActive=-1;
+    const pct=Math.round(similarity(finalTxt.toLowerCase().trim(), target.toLowerCase().trim())*100);
+    if(scoreEl){ scoreEl.classList.remove('hidden','good','mid'); scoreEl.classList.add(pct>=70?'good':'mid'); scoreEl.textContent=(pct>=70?'✓ 吻合 ':'~ 吻合 ')+pct+'%'; }
+  };
+  try{ sentRecog.start(); }catch(err){}
+}
+
+// ============ BIND EVENTS PER TURN ============
+function bindTurn(d){
+  const $=id=>document.getElementById(id);
+  document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ S.speed=parseFloat(b.dataset.sp); document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('active',x===b)); });
+  if($('playBtn')) $('playBtn').onclick=()=>togglePlay(d.en);
+  if($('replayBtn')) $('replayBtn').onclick=()=>speak(d.en, S.speed);
+  if($('slowBtn')) $('slowBtn').onclick=()=>speak(d.en, 0.7);
+  document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{
+    S.selfLevel=b.dataset.lv; S.path=b.dataset.lv;
+    if(S.stage==='listen'){ renderTurn(); }   // re-render so hint + button update
+  });
+
+  // stage nav
+  if($('toHelp')) $('toHelp').onclick=()=>{
+    if(!S.selfLevel){ return; }
+    S.stage='help'; S.helpSub = (S.path==='high') ? 3 : 0;   // high jumps straight to reveal
+    S.quizFills=[]; S.quizChecked=false; renderTurn();
+  };
+  if($('backListen')) $('backListen').onclick=()=>{ S.stage='listen'; renderTurn(); };
+  if($('toSpeak')) $('toSpeak').onclick=()=>{ S.stage='speak'; renderTurn(); };
+  if($('backHelp')) $('backHelp').onclick=()=>{ S.stage='help'; S.helpSub=helpLast(); renderTurn(); };
+
+  // help sub-step nav
+  document.querySelectorAll('[data-sub]').forEach(el=>el.onclick=()=>{ S.helpSub=parseInt(el.dataset.sub); renderTurn(); });
+  if($('subPrev')) $('subPrev').onclick=()=>{ S.helpSub=Math.max(0,S.helpSub-1); renderTurn(); };
+  if($('subNext')) $('subNext').onclick=()=>{ S.helpSub=Math.min(helpLast(),S.helpSub+1); renderTurn(); };
+
+  // === SUB 1 quiz ===
+  document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{
+    const val=b.dataset.opt;
+    // fill first empty blank
+    const q=d.quiz; let placed=false;
+    for(let i=0;i<q.blanks.length;i++){ if(!S.quizFills[i]){ S.quizFills[i]=val; placed=true; break; } }
+    if(placed){ S.quizChecked=false; document.getElementById('helpBody').innerHTML=renderHelpSub(d); rebindHelpBody(d); }
+  });
+  document.querySelectorAll('[data-gap]').forEach(g=>g.onclick=()=>{
+    const i=parseInt(g.dataset.gap); S.quizFills[i]=null; S.quizChecked=false;
+    document.getElementById('helpBody').innerHTML=renderHelpSub(d); rebindHelpBody(d);
+  });
+  if($('quizReset')) $('quizReset').onclick=()=>{ S.quizFills=[]; S.quizChecked=false; document.getElementById('helpBody').innerHTML=renderHelpSub(d); rebindHelpBody(d); };
+  if($('quizCheck')) $('quizCheck').onclick=()=>{ S.quizChecked=true; document.getElementById('helpBody').innerHTML=renderHelpSub(d); rebindHelpBody(d); };
+
+  // === SUB 2 sounds ===
+  document.querySelectorAll('[data-sound]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.sound); const r=parseFloat(b.dataset.rate); speak(d.sounds[i].written, r); });
+  // === SUB 4 shadow ===
+  document.querySelectorAll('[data-shadow-play]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.shadowPlay); const r=b.dataset.rate?parseFloat(b.dataset.rate):1; speak(d.shadow[i], r); });
+  document.querySelectorAll('[data-shadow-rec]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.shadowRec); toggleShadowRec(i, d.shadow[i]); });
+
+  // === LOW path: per-sentence practice ===
+  document.querySelectorAll('[data-sent-play]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.sentPlay); const r=parseFloat(b.dataset.rate); speak(d.sentences[i].en, r); });
+  document.querySelectorAll('[data-sent-decode]').forEach(b=>b.onclick=()=>{
+    const i=parseInt(b.dataset.sentDecode); const el=document.getElementById('sentDecode'+i);
+    if(el){ el.classList.toggle('show'); b.textContent = el.classList.contains('show')?'🧩 收起拆解':'🧩 听感拆解'; }
+  });
+  document.querySelectorAll('[data-spt]').forEach(b=>b.onclick=()=>{
+    const [si,pi]=b.dataset.spt.split('-').map(Number);
+    const pt=(d.sentences[si].points||[])[pi]; if(pt) speak(pt.w, 0.6);
+  });
+  document.querySelectorAll('[data-sent-zh]').forEach(b=>b.onclick=()=>{
+    const i=parseInt(b.dataset.sentZh); const el=document.getElementById('sentZh'+i);
+    if(el){ el.classList.toggle('show'); b.textContent = el.classList.contains('show')?'🀄 隐藏中文':'🀄 显示中文'; }
+  });
+  document.querySelectorAll('[data-sent-rec]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.sentRec); toggleSentRec(i, d.sentences[i].en, b); });
+
+  // speak stage
+  if($('micBtn')) $('micBtn').onclick=toggleRec;
+  if($('pbBtn')) $('pbBtn').onclick=togglePlayback;
+  if($('typeBox')) $('typeBox').oninput=(e)=>{ S.myAnswer=e.target.value; };
+  if($('toFeedback')) $('toFeedback').onclick=()=>{
+    const box=$('typeBox'); if(box) S.myAnswer=box.value.trim();
+    // allow submit if the user recorded audio OR typed text (recognition may fail under file://)
+    const hasAudio = !!(document.getElementById('myAudio') && document.getElementById('myAudio').src);
+    if(!S.myAnswer && !hasAudio){ alert('先录一段音、或在文本框里打字回应 🙂'); return; }
+    if(!S.myAnswer && hasAudio){ S.myAnswer='（已录音，未自动识别文字——可在反馈页参考范例回应）'; }
+    S.stage='feedback'; renderTurn();
+  };
+  // feedback nav
+  if($('nextTurn')) $('nextTurn').onclick=()=>{ S.turn++; S.stage='listen'; S.helpSub=0; S.selfLevel=null; S.path=null; S.myAnswer=''; S.quizFills=[]; S.quizChecked=false; renderTurn(); };
+  if($('retrySpeak')) $('retrySpeak').onclick=()=>{ S.stage='speak'; renderTurn(); };
+  if($('finishSess')) $('finishSess').onclick=showComplete;
+}
+// rebind only the help body (after quiz re-render) — reattach sub-step nav + action buttons too
+function rebindHelpBody(d){
+  bindTurn(d);
+}
+
+function showComplete(){
+  if(synth) synth.cancel();
+  document.getElementById('turnArea').innerHTML=`
+  <div style="text-align:center;padding:24px 12px">
+    <div style="font-size:52px;margin-bottom:10px">🎉</div>
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">完成！你走完了一段完整对话</h2>
+    <p style="color:var(--text-2);font-size:14px;max-width:480px;margin:0 auto 20px;line-height:1.6">
+      升级后的「帮你听懂」带你走了：<b>定位卡点</b>（填空找出没听清的词）→ <b>听感拆解</b>（书面 vs 实际听到的音）→
+      <b>影子跟读</b> → <b>揭示完整原文</b>（英文+中文对照）。<br>
+      正式版会记录你每次卡在哪些词/音，自动生成个性化磨耳朵清单。
+    </p>
+    <div style="display:flex;gap:11px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-primary" id="againBtn">再练一段 →</button>
+      <button class="btn-ghost" id="homeBtn">返回选择</button>
+    </div>
+  </div>`;
+  document.getElementById('againBtn').onclick=()=>{ S.turn=0;S.stage='listen';S.helpSub=0;S.selfLevel=null;S.path=null;S.myAnswer='';S.quizFills=[];S.quizChecked=false; renderTurn(); };
+  document.getElementById('homeBtn').onclick=exitSession;
+}
+
+// ============ INIT ============
+renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel();
+document.getElementById('startBtn').onclick=startSession;
+document.getElementById('exitBtn').onclick=exitSession;
+</script>
+</body>
+</html>

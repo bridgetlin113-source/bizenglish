@@ -1,0 +1,16 @@
+{
+  "name": "BizEnglish Coach — 商务英语听说训练",
+  "short_name": "BizEnglish",
+  "description": "SAP SuccessFactors 实施顾问的商务英语听力+口语训练 App",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f8fa",
+  "theme_color": "#2563eb",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
