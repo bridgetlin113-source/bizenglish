@@ -310,6 +310,29 @@
   .weak-word{font-size:12px;font-weight:600;background:var(--error-soft);color:var(--error);padding:4px 10px;border-radius:var(--radius-pill)}
   .stats-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px}
   @media (max-width:560px){ .stats-grid{grid-template-columns:1fr 1fr} }
+  .view-records{display:block;width:100%;margin-top:12px;font-size:13.5px;font-weight:700;color:var(--primary-dark);background:var(--primary-soft);border:1px solid var(--primary);border-radius:var(--radius-pill);padding:10px}
+  .view-records:hover{background:#dbe7fd}
+  /* records overlay */
+  .rec-overlay{position:fixed;inset:0;background:rgba(20,30,50,.5);display:none;align-items:flex-start;justify-content:center;z-index:999;padding:40px 14px}
+  .rec-modal{background:var(--surface);border-radius:var(--radius);width:100%;max-width:600px;max-height:82vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden}
+  .rec-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .rec-tabs{display:flex;gap:8px}
+  .rec-tab{font-size:13.5px;font-weight:700;padding:8px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--text-2)}
+  .rec-tab.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .rec-close{font-size:18px;color:var(--text-2);width:32px;height:32px;border-radius:8px}
+  .rec-close:hover{background:var(--surface-2)}
+  .rec-body{padding:14px;overflow-y:auto}
+  .rec-item{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;background:var(--surface)}
+  .rec-item-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .rec-combo{font-size:13.5px;font-weight:700}
+  .rec-time{font-size:12px;color:var(--muted)}
+  .rec-item-detail{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
+  .rec-line{font-size:13px;line-height:1.5;margin-bottom:6px}
+  .fav-text{font-size:14px;font-weight:600;line-height:1.5;color:var(--text)}
+  .fav-ctx{font-size:11.5px;color:var(--muted);margin-top:5px}
+  .fav-del{font-size:12px;color:var(--error);margin-top:8px}
+  .fav-btn{background:none;font-size:18px;line-height:1;padding:2px 6px;border-radius:6px}
+  .fav-btn:hover{background:var(--surface-2)}
   /* ===== Mobile adaptation (≤560px) ===== */
   @media (max-width: 560px){
     .app{padding:14px 12px calc(48px + env(safe-area-inset-bottom))}
@@ -1665,13 +1688,13 @@ const PROG_KEY='bizenglish_progress_v1';
 function loadProg(){
   try{ return JSON.parse(localStorage.getItem(PROG_KEY)) || null; }catch(e){ return null; }
   }
-function defaultProg(){ return { totalTurns:0, totalSessions:0, days:[], lastDay:'', streak:0, weakWords:{}, combos:{} }; }
+function defaultProg(){ return { totalTurns:0, totalSessions:0, days:[], lastDay:'', streak:0, weakWords:{}, combos:{}, history:[], favorites:[] }; }
 function saveProg(p){ try{ localStorage.setItem(PROG_KEY, JSON.stringify(p)); }catch(e){} }
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 
 // 完成一个回合就算打卡
-function checkIn(comboLabel){
+function checkIn(comboLabel, detail){
   let p=loadProg()||defaultProg();
   p.totalTurns=(p.totalTurns||0)+1;
   const t=todayStr();
@@ -1685,6 +1708,13 @@ function checkIn(comboLabel){
     p.days=p.days.slice(-60); // keep last 60 days
   }
   if(comboLabel){ p.combos=p.combos||{}; p.combos[comboLabel]=(p.combos[comboLabel]||0)+1; }
+  // 记录练习历史（保留最近 50 条）
+  p.history=p.history||[];
+  p.history.unshift({
+    ts: Date.now(), combo: comboLabel||'',
+    clientLine: (detail&&detail.clientLine)||'', myAnswer: (detail&&detail.myAnswer)||''
+  });
+  p.history=p.history.slice(0,50);
   saveProg(p); updateStreakUI();
   return p;
 }
@@ -1702,8 +1732,8 @@ function renderStats(){
   const panel=document.getElementById('statsPanel'); if(!panel) return;
   const p=loadProg();
   if(!p || !p.totalTurns){
-    panel.innerHTML='<div class="stats-empty">还没有练习记录。完成一个回合即可打卡，开始你的第一天吧！💪</div>';
-    return;
+    panel.innerHTML='<div class="stats-empty">还没有练习记录。完成一个回合即可打卡，开始你的第一天吧！💪</div>'+recViewBtn();
+    bindRecView(); return;
   }
   // top weak words
   const ww=Object.keys(p.weakWords||{}).sort((a,b)=>p.weakWords[b]-p.weakWords[a]).slice(0,8);
@@ -1725,8 +1755,73 @@ function renderStats(){
       '<div class="stat"><div class="v">'+ww.length+'</div><div class="k">薄弱词</div></div>'+
     '</div>'+
     '<div class="cal-week">'+cal+'</div>'+
-    (ww.length? '<div style="font-size:11.5px;color:var(--muted);margin:12px 0 0 2px">🎯 高频薄弱词（跟读匹配度偏低）：</div><div class="weak-words">'+ww.map(w=>'<span class="weak-word">'+w+'</span>').join('')+'</div>' : '');
+    (ww.length? '<div style="font-size:11.5px;color:var(--muted);margin:12px 0 0 2px">🎯 高频薄弱词（跟读匹配度偏低）：</div><div class="weak-words">'+ww.map(w=>'<span class="weak-word">'+w+'</span>').join('')+'</div>' : '')+recViewBtn();
+  bindRecView();
 }
+
+// ---- 收藏范例句（地道表达库）----
+function isFav(sentence){ const p=loadProg(); return !!(p && (p.favorites||[]).some(function(f){return f.text===sentence;})); }
+function toggleFav(sentence, ctx){
+  let p=loadProg()||defaultProg(); p.favorites=p.favorites||[];
+  const idx=p.favorites.findIndex(function(f){return f.text===sentence;});
+  if(idx>=0){ p.favorites.splice(idx,1); } else { p.favorites.unshift({text:sentence, ctx:ctx||'', ts:Date.now()}); }
+  p.favorites=p.favorites.slice(0,100); saveProg(p);
+  return isFav(sentence);
+}
+
+function recViewBtn(){ return '<button class="view-records" id="viewRecordsBtn">📖 查看我的记录（练习历史 · 地道表达库）→</button>'; }
+function bindRecView(){ const b=document.getElementById('viewRecordsBtn'); if(b) b.onclick=function(){ openRecords('history'); }; }
+// ---- 「我的记录」浮层（练习历史 + 地道表达库）----
+function openRecords(tab){
+  let ov=document.getElementById('recordsOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='recordsOverlay'; ov.className='rec-overlay'; document.body.appendChild(ov); }
+  const cur=tab||'history';
+  ov.innerHTML =
+    '<div class="rec-modal">'+
+      '<div class="rec-head">'+
+        '<div class="rec-tabs">'+
+          '<button class="rec-tab '+(cur==='history'?'on':'')+'" data-rtab="history">📅 练习历史</button>'+
+          '<button class="rec-tab '+(cur==='fav'?'on':'')+'" data-rtab="fav">⭐ 地道表达库</button>'+
+        '</div>'+
+        '<button class="rec-close" id="recClose">✕</button>'+
+      '</div>'+
+      '<div class="rec-body" id="recBody">'+(cur==='history'?recHistoryHTML():recFavHTML())+'</div>'+
+    '</div>';
+  ov.style.display='flex';
+  ov.onclick=function(e){ if(e.target===ov) closeRecords(); };
+  document.getElementById('recClose').onclick=closeRecords;
+  ov.querySelectorAll('[data-rtab]').forEach(function(b){ b.onclick=function(){ openRecords(b.dataset.rtab); }; });
+  bindRecBody();
+}
+function closeRecords(){ const ov=document.getElementById('recordsOverlay'); if(ov) ov.style.display='none'; }
+function fmtTime(ts){ const d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function recHistoryHTML(){
+  const p=loadProg(); const h=(p&&p.history)||[];
+  if(!h.length) return '<div class="stats-empty">还没有练习记录。完成一个回合就会记录在这里。</div>';
+  return h.map(function(it,i){ return (
+    '<div class="rec-item">'+
+      '<div class="rec-item-head" data-hexp="'+i+'"><span class="rec-combo">'+(it.combo||'练习')+'</span><span class="rec-time">'+fmtTime(it.ts)+' ▾</span></div>'+
+      '<div class="rec-item-detail" id="hdet'+i+'" style="display:none">'+
+        (it.clientLine?'<div class="rec-line"><b>客户：</b>'+it.clientLine+'</div>':'')+
+        (it.myAnswer?'<div class="rec-line"><b>我的回答：</b>'+it.myAnswer+'</div>':'')+
+      '</div>'+
+    '</div>'); }).join('');
+}
+function recFavHTML(){
+  const p=loadProg(); const f=(p&&p.favorites)||[];
+  if(!f.length) return '<div class="stats-empty">还没有收藏。在反馈页点范例回答旁的 ⭐ 即可收藏地道表达。</div>';
+  return f.map(function(it,i){ return (
+    '<div class="rec-item">'+
+      '<div class="fav-text">"'+it.text+'"</div>'+
+      (it.ctx?'<div class="fav-ctx">'+it.ctx+'</div>':'')+
+      '<button class="fav-del" data-favdel="'+i+'">🗑 移除</button>'+
+    '</div>'); }).join('');
+}
+function bindRecBody(){
+  document.querySelectorAll('[data-hexp]').forEach(function(el){ el.onclick=function(){ const d=document.getElementById('hdet'+el.dataset.hexp); if(d) d.style.display=d.style.display==='none'?'block':'none'; }; });
+  document.querySelectorAll('[data-favdel]').forEach(function(b){ b.onclick=function(){ let p=loadProg()||defaultProg(); p.favorites.splice(parseInt(b.dataset.favdel),1); saveProg(p); openRecords('fav'); }; });
+}
+
 
 // ============ RENDER SETUP ============
 function renderAccents(){
@@ -2221,9 +2316,13 @@ function renderRealFeedback(res, d){
     '<div class="my-answer" style="margin-bottom:14px"><div class="lbl">你的回答</div><div class="txt">'+(S.myAnswer||'')+'</div></div>'+
     '<div class="fb-block gram"><h4>🟠 语法 / 用词修正</h4>'+list(res.grammar)+'</div>'+
     '<div class="fb-block express"><h4>🔵 更地道的商务表达建议</h4>'+list(res.expression)+'</div>'+
-    (res.modelAnswer? '<div class="fb-block express"><h4>💡 参考范例回答</h4><div class="fb-item"><span style="display:block;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.55">"'+res.modelAnswer+'"</span></div></div>':'')+
+    (res.modelAnswer? '<div class="fb-block express"><h4>💡 参考范例回答 <button class="fav-btn" id="favModelBtn" title="收藏这句地道表达">'+(isFav(res.modelAnswer)?'⭐':'☆')+'</button></h4><div class="fb-item"><span style="display:block;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.55">"'+res.modelAnswer+'"</span></div></div>':'')+
     '<div class="fb-block good"><h4>🟢 做得好</h4>'+list(res.good)+'</div>'+
     '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">🤖 由通义千问基于你的实际回答生成 · 发音评分需专业引擎，暂未包含</div>';
+  // 收藏范例句按钮
+  const fb=document.getElementById('favModelBtn');
+  if(fb && res.modelAnswer){ fb.onclick=function(){ const a=ACCENTS.find(x=>x.id===S.accent),m=MODULES.find(x=>x.id===S.module),sc=SCENARIOS.find(x=>x.id===S.scn);
+    const on=toggleFav(res.modelAnswer, (a?a.name:'')+' · '+(m?m.ab:'')+' · '+(sc?sc.name:'')); fb.textContent=on?'⭐':'☆'; }; }
 }
 
 // ============ AUDIO ============
@@ -2511,7 +2610,7 @@ function bindTurn(d){
     if(!S.myAnswer && hasAudio){ S.myAnswer='（已录音，未自动识别文字——可在反馈页参考范例回应）'; }
     // 完成一个回合的口语回应 = 打卡
     try{ const a=ACCENTS.find(x=>x.id===S.accent),m=MODULES.find(x=>x.id===S.module),sc=SCENARIOS.find(x=>x.id===S.scn);
-      checkIn((a?a.name:'')+' × '+(m?m.ab:'')+' × '+(sc?sc.name:'')); }catch(e){}
+      const d0=curTurn(); checkIn((a?a.name:'')+' × '+(m?m.ab:'')+' × '+(sc?sc.name:''), {clientLine:(d0&&d0.en)||'', myAnswer:S.myAnswer||''}); }catch(e){}
     S.stage='feedback'; renderTurn();
   };
   // feedback nav
