@@ -295,6 +295,21 @@
   .fb-item .word{font-family:var(--mono);font-weight:700;background:#fff;padding:1px 6px;border-radius:5px;border:1px solid var(--border)}
 
   .footer-note{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;line-height:1.6}
+  /* ===== Progress / stats ===== */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center;box-shadow:var(--shadow)}
+  .stat .v{font-size:22px;font-weight:800;color:var(--primary);font-family:var(--mono)}
+  .stat .k{font-size:11.5px;color:var(--text-2);margin-top:3px}
+  .stat.streak .v{color:var(--warn)}
+  .cal-week{display:flex;gap:6px;justify-content:center;margin-top:12px}
+  .cal-day{flex:1;max-width:44px;text-align:center;font-size:10px;color:var(--muted)}
+  .cal-dot{width:26px;height:26px;margin:4px auto 0;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:13px;border:1.5px solid var(--border)}
+  .cal-dot.done{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+  .cal-dot.today{box-shadow:0 0 0 2px var(--primary)}
+  .weak-words{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .weak-word{font-size:12px;font-weight:600;background:var(--error-soft);color:var(--error);padding:4px 10px;border-radius:var(--radius-pill)}
+  .stats-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px}
+  @media (max-width:560px){ .stats-grid{grid-template-columns:1fr 1fr} }
   /* ===== Mobile adaptation (≤560px) ===== */
   @media (max-width: 560px){
     .app{padding:14px 12px calc(48px + env(safe-area-inset-bottom))}
@@ -363,7 +378,7 @@
         <p>SAP SuccessFactors 实施 · 商务英语听说训练</p>
       </div>
     </div>
-    <div class="streak"><span class="fire">🔥</span> 连续 5 天</div>
+    <div class="streak" id="streakBox" title="连续打卡天数"><span class="fire">🔥</span> <span id="streakDays">0</span> 天</div>
   </div>
 
   <!-- ============ SETUP VIEW ============ -->
@@ -377,6 +392,9 @@
 
     <div class="section-label">③ 选择商务沟通场景</div>
     <div class="scenarios" id="scnGrid"></div>
+
+    <div class="section-label">📊 我的学习记录</div>
+    <div id="statsPanel"></div>
 
     <div class="startbar">
       <div class="sel">
@@ -1642,6 +1660,74 @@ let synth = window.speechSynthesis; let voices = [];
 function loadVoices(){ voices = synth ? synth.getVoices() : []; }
 if(synth){ loadVoices(); synth.onvoiceschanged = loadVoices; }
 
+// ============ PROGRESS (打卡 + 学习记录，存 localStorage) ============
+const PROG_KEY='bizenglish_progress_v1';
+function loadProg(){
+  try{ return JSON.parse(localStorage.getItem(PROG_KEY)) || null; }catch(e){ return null; }
+  }
+function defaultProg(){ return { totalTurns:0, totalSessions:0, days:[], lastDay:'', streak:0, weakWords:{}, combos:{} }; }
+function saveProg(p){ try{ localStorage.setItem(PROG_KEY, JSON.stringify(p)); }catch(e){} }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+
+// 完成一个回合就算打卡
+function checkIn(comboLabel){
+  let p=loadProg()||defaultProg();
+  p.totalTurns=(p.totalTurns||0)+1;
+  const t=todayStr();
+  if(p.lastDay!==t){
+    // new day check-in → update streak
+    if(p.lastDay && daysBetween(p.lastDay,t)===1) p.streak=(p.streak||0)+1;
+    else p.streak=1;
+    p.lastDay=t;
+    if(!p.days) p.days=[];
+    if(p.days.indexOf(t)<0) p.days.push(t);
+    p.days=p.days.slice(-60); // keep last 60 days
+  }
+  if(comboLabel){ p.combos=p.combos||{}; p.combos[comboLabel]=(p.combos[comboLabel]||0)+1; }
+  saveProg(p); updateStreakUI();
+  return p;
+}
+function recordWeakWords(words){
+  if(!words||!words.length) return;
+  let p=loadProg()||defaultProg(); p.weakWords=p.weakWords||{};
+  words.forEach(w=>{ w=(w||'').trim().toLowerCase(); if(w) p.weakWords[w]=(p.weakWords[w]||0)+1; });
+  saveProg(p);
+}
+function updateStreakUI(){
+  const p=loadProg()||defaultProg();
+  const el=document.getElementById('streakDays'); if(el) el.textContent=p.streak||0;
+}
+function renderStats(){
+  const panel=document.getElementById('statsPanel'); if(!panel) return;
+  const p=loadProg();
+  if(!p || !p.totalTurns){
+    panel.innerHTML='<div class="stats-empty">还没有练习记录。完成一个回合即可打卡，开始你的第一天吧！💪</div>';
+    return;
+  }
+  // top weak words
+  const ww=Object.keys(p.weakWords||{}).sort((a,b)=>p.weakWords[b]-p.weakWords[a]).slice(0,8);
+  // last 7 days calendar
+  const names=['日','一','二','三','四','五','六'];
+  let cal='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const done=(p.days||[]).indexOf(ds)>=0;
+    const isToday=i===0;
+    cal+='<div class="cal-day">'+names[d.getDay()]+'<div class="cal-dot '+(done?'done':'')+' '+(isToday?'today':'')+'">'+(done?'🔥':'')+'</div></div>';
+  }
+  panel.innerHTML=
+    '<div class="stats-grid">'+
+      '<div class="stat streak"><div class="v">'+(p.streak||0)+'</div><div class="k">连续打卡(天)</div></div>'+
+      '<div class="stat"><div class="v">'+(p.totalTurns||0)+'</div><div class="k">累计回合</div></div>'+
+      '<div class="stat"><div class="v">'+((p.days||[]).length)+'</div><div class="k">练习天数</div></div>'+
+      '<div class="stat"><div class="v">'+ww.length+'</div><div class="k">薄弱词</div></div>'+
+    '</div>'+
+    '<div class="cal-week">'+cal+'</div>'+
+    (ww.length? '<div style="font-size:11.5px;color:var(--muted);margin:12px 0 0 2px">🎯 高频薄弱词（跟读匹配度偏低）：</div><div class="weak-words">'+ww.map(w=>'<span class="weak-word">'+w+'</span>').join('')+'</div>' : '');
+}
+
 // ============ RENDER SETUP ============
 function renderAccents(){
   // an accent has "tailored" listening-decode if the current script authored byAccent for it
@@ -1747,6 +1833,7 @@ function exitSession(){
   document.getElementById('session').classList.add('hidden');
   document.getElementById('setup').classList.remove('hidden');
   document.getElementById('globalFoot').style.display='none';
+  updateStreakUI(); renderStats();
 }
 function setSteps(stage){
   const order=['listen','help','speak','feedback']; const idx=order.indexOf(stage);
@@ -2271,6 +2358,8 @@ function toggleShadowRec(idx, target){
     const pct=Math.round(similarity(finalTxt.trim(), target.trim())*100);
     scoreEl.classList.remove('hidden','good','mid');
     scoreEl.classList.add(pct>=80?'good':'mid');
+    // 匹配度偏低 → 把这句的词记为薄弱词
+    if(pct<80){ try{ recordWeakWords((target||'').replace(/[^A-Za-z0-9'\s]/g,' ').split(/\s+/).filter(w=>w.length>3)); }catch(e){} }
     scoreEl.textContent=(pct>=80?'✓ 匹配 ':'~ 匹配 ')+pct+'%';
   };
   // start audio recording (for replay) + recognition (for score)
@@ -2420,6 +2509,9 @@ function bindTurn(d){
     const hasAudio = !!(document.getElementById('myAudio') && document.getElementById('myAudio').src);
     if(!S.myAnswer && !hasAudio){ alert('先录一段音、或在文本框里打字回应 🙂'); return; }
     if(!S.myAnswer && hasAudio){ S.myAnswer='（已录音，未自动识别文字——可在反馈页参考范例回应）'; }
+    // 完成一个回合的口语回应 = 打卡
+    try{ const a=ACCENTS.find(x=>x.id===S.accent),m=MODULES.find(x=>x.id===S.module),sc=SCENARIOS.find(x=>x.id===S.scn);
+      checkIn((a?a.name:'')+' × '+(m?m.ab:'')+' × '+(sc?sc.name:'')); }catch(e){}
     S.stage='feedback'; renderTurn();
   };
   // feedback nav
@@ -2455,7 +2547,7 @@ function showComplete(){
 }
 
 // ============ INIT ============
-renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel();
+renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel(); updateStreakUI(); renderStats();
 document.getElementById('startBtn').onclick=startSession;
 document.getElementById('exitBtn').onclick=exitSession;
 </script>
