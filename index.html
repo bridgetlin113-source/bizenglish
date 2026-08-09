@@ -1991,8 +1991,10 @@ function subShadow(d){
           <button class="mini-play" data-shadow-play="${i}" style="width:38px;height:38px">🔊</button>
           <button class="mini-play slow" data-shadow-play="${i}" data-rate="0.7" style="width:38px;height:38px">🐢</button>
           <button class="shadow-rec" data-shadow-rec="${i}"><span>🎤</span> 跟读</button>
+          <button class="mini-play" data-shadow-replay="${i}" id="shReplay${i}" style="width:38px;height:38px;display:none" title="回放我的跟读">▶️</button>
           <span class="shadow-score hidden" id="shScore${i}"></span>
         </div>
+        <audio id="shAudio${i}" style="display:none"></audio>
         <div class="shadow-heard" id="shHeard${i}"></div>
       </div>`).join('')}
     <div class="decode-tip" style="margin-top:14px"><span class="em">💡</span>
@@ -2254,32 +2256,74 @@ function showMyAnswer(){
 
 // shadowing recognition (per line)
 let shRecog=null, shActive=-1;
+let shMediaRec=null, shStream=null, shChunks=[];
 function toggleShadowRec(idx, target){
   const btn=document.querySelector(`[data-shadow-rec="${idx}"]`);
   const scoreEl=document.getElementById('shScore'+idx), heardEl=document.getElementById('shHeard'+idx);
-  if(!shRecog) shRecog=initRecog('en-US');
-  if(!shRecog){ heardEl.textContent='⚠️ 浏览器不支持语音识别'; return; }
-  if(shActive===idx){ shRecog.stop(); return; }
+  if(shActive===idx){ // stop
+    try{ if(shMediaRec && shMediaRec.state!=='inactive') shMediaRec.stop(); }catch(e){}
+    try{ if(shRecog) shRecog.stop(); }catch(e){}
+    return;
+  }
   let finalTxt='';
-  shRecog.onstart=()=>{ shActive=idx; btn.classList.add('recording'); btn.innerHTML='<span>⏹</span> 停止'; heardEl.textContent='🔴 听你跟读…'; };
-  shRecog.onresult=(e)=>{ finalTxt=''; for(let i=0;i<e.results.length;i++) finalTxt+=e.results[i][0].transcript; heardEl.textContent='你说的：'+finalTxt; };
-  shRecog.onerror=(e)=>{ heardEl.textContent='⚠️ '+e.error; };
-  shRecog.onend=()=>{
+  const finish=()=>{
     btn.classList.remove('recording'); btn.innerHTML='<span>🎤</span> 跟读'; shActive=-1;
-    // crude similarity score
-    const sim=similarity(finalTxt.toLowerCase().trim(), target.toLowerCase().trim());
-    const pct=Math.round(sim*100);
+    const pct=Math.round(similarity(finalTxt.trim(), target.trim())*100);
     scoreEl.classList.remove('hidden','good','mid');
-    scoreEl.classList.add(pct>=70?'good':'mid');
-    scoreEl.textContent=(pct>=70?'✓ 吻合 ':'~ 吻合 ')+pct+'%';
+    scoreEl.classList.add(pct>=80?'good':'mid');
+    scoreEl.textContent=(pct>=80?'✓ 匹配 ':'~ 匹配 ')+pct+'%';
   };
-  try{ shRecog.start(); }catch(err){}
+  // start audio recording (for replay) + recognition (for score)
+  const startRec=(stream)=>{
+    shStream=stream; shChunks=[];
+    if(stream){ try{
+      shMediaRec=new MediaRecorder(stream);
+      shMediaRec.ondataavailable=(e)=>{ if(e.data&&e.data.size>0) shChunks.push(e.data); };
+      shMediaRec.onstop=()=>{
+        try{ var blob=new Blob(shChunks,{type:(shChunks[0]&&shChunks[0].type)||'audio/webm'});
+          var au=document.getElementById('shAudio'+idx), rp=document.getElementById('shReplay'+idx);
+          if(au){ au.src=URL.createObjectURL(blob); } if(rp){ rp.style.display='inline-grid'; }
+        }catch(e){}
+        if(shStream){ shStream.getTracks().forEach(t=>t.stop()); shStream=null; }
+      };
+      shMediaRec.start();
+    }catch(e){} }
+    // recognition
+    if(!shRecog) shRecog=initRecog('en-US');
+    if(shRecog){
+      shRecog.onresult=(e)=>{ finalTxt=''; for(let i=0;i<e.results.length;i++) finalTxt+=e.results[i][0].transcript; if(heardEl) heardEl.textContent='你说的：'+finalTxt; };
+      shRecog.onerror=(e)=>{};
+      shRecog.onend=()=>{ finish(); };
+      try{ shRecog.start(); }catch(e){}
+    } else if(shMediaRec){ shMediaRec.addEventListener('stop', finish, {once:true}); if(heardEl) heardEl.textContent='（此浏览器不支持识别，仅录音可回放）'; }
+    shActive=idx; btn.classList.add('recording'); btn.innerHTML='<span>⏹</span> 停止'; if(heardEl) heardEl.textContent='🔴 听你跟读…（再点停止）';
+  };
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(startRec).catch(()=>startRec(null));
+  } else { startRec(null); }
 }
+// replay a shadow recording
+function replayShadow(idx){
+  const au=document.getElementById('shAudio'+idx);
+  if(au && au.src){ au.currentTime=0; au.play(); }
+}
+
 function similarity(a,b){
   if(!a) return 0;
-  const wa=a.split(/\s+/), wb=b.split(/\s+/);
-  let hit=0; wb.forEach(w=>{ if(wa.includes(w)) hit++; });
-  return Math.min(1, hit/Math.max(1,wb.length));
+  // normalize: lowercase, strip punctuation, collapse spaces, drop contraction apostrophes
+  function norm(x){ return (x||'').toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+  const wa=norm(a).split(' ').filter(Boolean);
+  const wb=norm(b).split(' ').filter(Boolean);
+  if(!wb.length) return 0;
+  // order-aware match via longest-common-subsequence (rewards correct words in correct order)
+  const m=wa.length, n=wb.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let x=1;x<=m;x++){ for(let y=1;y<=n;y++){
+    dp[x][y] = wa[x-1]===wb[y-1] ? dp[x-1][y-1]+1 : Math.max(dp[x-1][y], dp[x][y-1]);
+  }}
+  const lcs=dp[m][n];
+  // score = how much of the target you covered, in order
+  return Math.min(1, lcs/n);
 }
 
 // per-sentence shadow recognition (low path)
@@ -2296,7 +2340,7 @@ function toggleSentRec(idx, target, btn){
   sentRecog.onend=()=>{
     btn.classList.remove('recording'); btn.textContent='🎤 跟读'; sentActive=-1;
     const pct=Math.round(similarity(finalTxt.toLowerCase().trim(), target.toLowerCase().trim())*100);
-    if(scoreEl){ scoreEl.classList.remove('hidden','good','mid'); scoreEl.classList.add(pct>=70?'good':'mid'); scoreEl.textContent=(pct>=70?'✓ 吻合 ':'~ 吻合 ')+pct+'%'; }
+    if(scoreEl){ scoreEl.classList.remove('hidden','good','mid'); scoreEl.classList.add(pct>=80?'good':'mid'); scoreEl.textContent=(pct>=80?'✓ 匹配 ':'~ 匹配 ')+pct+'%'; }
   };
   try{ sentRecog.start(); }catch(err){}
 }
@@ -2348,6 +2392,7 @@ function bindTurn(d){
   // === SUB 4 shadow ===
   document.querySelectorAll('[data-shadow-play]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.shadowPlay); const r=b.dataset.rate?parseFloat(b.dataset.rate):1; speak(d.shadow[i], r); });
   document.querySelectorAll('[data-shadow-rec]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.shadowRec); toggleShadowRec(i, d.shadow[i]); });
+  document.querySelectorAll('[data-shadow-replay]').forEach(b=>b.onclick=()=>{ replayShadow(parseInt(b.dataset.shadowReplay)); });
 
   // === LOW path: per-sentence practice ===
   document.querySelectorAll('[data-sent-play]').forEach(b=>b.onclick=()=>{ const i=parseInt(b.dataset.sentPlay); const r=parseFloat(b.dataset.rate); speak(d.sentences[i].en, r); });
