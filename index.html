@@ -1888,7 +1888,7 @@ function syncSel(){
 
 // ============ SESSION FLOW ============
 function startSession(){
-  Object.assign(S,{started:true,turn:0,stage:'listen',path:null,helpSub:0,speed:1,selfLevel:null,myAnswer:'',quizFills:[],quizChecked:false,aiScript:null});
+  Object.assign(S,{started:true,turn:0,stage:'listen',path:null,helpSub:0,speed:1,selfLevel:null,myAnswer:'',quizFills:[],quizChecked:false,aiScript:null,aiPending:false,_waitingNext:false});
   const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
   document.getElementById('sPillAccent').textContent=a.flag+' '+a.name;
   document.getElementById('sPillModule').textContent='🧩 '+m.ab;
@@ -1901,25 +1901,39 @@ function startSession(){
 }
 
 // 用 AI 动态生成一段全新对话（无限续练的核心）
+function genTurns(n){
+  const a=ACCENTS.find(x=>x.id===S.accent), sc=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
+  return fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    action:'generate', scenario:sc.name, module:m.ab, moduleName:m.name, accent:a.name, turns:n
+  })}).then(function(r){return r.json();});
+}
+// 方案A：先出第1回合立刻开练，后台再补 2 回合
 function generateDialogue(){
   const area=document.getElementById('turnArea');
   const a=ACCENTS.find(x=>x.id===S.accent), s=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
+  S.aiScript=null; S.aiPending=true;
   if(area) area.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-2)">'+
     '<div style="font-size:34px;margin-bottom:10px">✨</div>'+
-    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 正在为你生成全新对话…</div>'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 正在生成第 1 回合…（几秒即可开练）</div>'+
     '<div style="font-size:13px">'+a.name+' × '+m.ab+' × '+s.name+'</div></div>';
-  fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    action:'generate', scenario:s.name, module:m.ab, moduleName:m.name, accent:a.name, turns:3
-  })}).then(function(r){return r.json();}).then(function(res){
+  // ① 先只要 1 回合
+  genTurns(1).then(function(res){
     if(res && res.turns && res.turns.length){
-      S.aiScript=res.turns; S.turn=0; renderTurn();
+      S.aiScript=res.turns.slice(0,1); S.turn=0; renderTurn();
+      // ② 后台补 2 回合（各自独立生成）
+      genTurns(2).then(function(res2){
+        if(res2 && res2.turns && res2.turns.length){ S.aiScript=S.aiScript.concat(res2.turns.slice(0,2)); }
+        S.aiPending=false;
+        // 若用户正卡在"等待下一回合"界面，自动推进
+        if(S._waitingNext){ S._waitingNext=false; S.turn++; S.stage='listen'; S.helpSub=0; S.selfLevel=null; S.path=null; S.myAnswer=''; S.quizFills=[]; S.quizChecked=false; renderTurn(); }
+      }).catch(function(){ S.aiPending=false; });
     } else {
       if(area) area.innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--error)">生成失败：'+(res && res.error?res.error:'返回格式异常')+'<br><span style="color:var(--text-2);font-size:12px">将使用内置样例对话。</span></div>';
-      setTimeout(function(){ S.aiScript=null; renderTurn(); },1500);
+      setTimeout(function(){ S.aiScript=null; S.aiPending=false; renderTurn(); },1500);
     }
   }).catch(function(err){
     if(area) area.innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--error)">连接后端失败：'+err.message+'<br><span style="color:var(--text-2);font-size:12px">将使用内置样例对话。</span></div>';
-    setTimeout(function(){ S.aiScript=null; renderTurn(); },1500);
+    setTimeout(function(){ S.aiScript=null; S.aiPending=false; renderTurn(); },1500);
   });
 }
 function exitSession(){
@@ -2222,9 +2236,11 @@ function ring(pct,color){
       stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"
       transform="rotate(-90 28 28)"/></svg>`;
 }
+// AI 模式期望 3 回合（先出1再后台补2）；内置脚本用实际长度
+function expectedTurns(){ return (S.aiScript && aiEnabled()) ? 3 : curScript().length; }
 function fbActions(){
   return `<div class="actions">
-    ${S.turn < curScript().length-1
+    ${S.turn < expectedTurns()-1
       ? `<button class="btn-primary" id="nextTurn">下一回合 · 客户继续说 →</button>`
       : `<button class="btn-primary" id="finishSess">🎉 完成这段对话</button>`}
     <button class="btn-ghost" id="retrySpeak">重新回应这一句</button>
@@ -2614,7 +2630,19 @@ function bindTurn(d){
     S.stage='feedback'; renderTurn();
   };
   // feedback nav
-  if($('nextTurn')) $('nextTurn').onclick=()=>{ S.turn++; S.stage='listen'; S.helpSub=0; S.selfLevel=null; S.path=null; S.myAnswer=''; S.quizFills=[]; S.quizChecked=false; renderTurn(); };
+  if($('nextTurn')) $('nextTurn').onclick=()=>{
+    // AI 模式下若下一回合还在后台生成，显示等待，生成好后自动推进
+    if(aiEnabled() && S.aiScript && (S.turn+1 >= S.aiScript.length) && S.aiPending){
+      S._waitingNext=true;
+      const area=document.getElementById('turnArea');
+      if(area) area.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-2)">'+
+        '<div style="font-size:30px;margin-bottom:10px">✨</div>'+
+        '<div style="font-weight:700;font-size:15px">下一回合马上就好…</div>'+
+        '<div style="font-size:13px;margin-top:6px">客户的下一段发言正在生成</div></div>';
+      return;
+    }
+    S.turn++; S.stage='listen'; S.helpSub=0; S.selfLevel=null; S.path=null; S.myAnswer=''; S.quizFills=[]; S.quizChecked=false; renderTurn();
+  };
   if($('retrySpeak')) $('retrySpeak').onclick=()=>{ S.stage='speak'; renderTurn(); };
   if($('finishSess')) $('finishSess').onclick=showComplete;
 }
