@@ -2936,6 +2936,76 @@ function chSetTurnPill(){
   var parent=el.parentNode; if(parent) parent.innerHTML='回合 <b id="sTurnNum">'+Math.min(done,CH_MAX_TURNS)+'</b> / '+CH_MAX_TURNS;
 }
 
+// ---- 闯关口语录音（复用 initRecog + MediaRecorder，独立状态，写入 #chInput）----
+var chRecog=null, chRecActive=false, chMediaRec=null, chStream=null, chChunks=[], chFinalTxt='';
+function chToggleRec(){
+  var btn=document.getElementById('chMicBtn'), hint=document.getElementById('chRecHint'), box=document.getElementById('chInput');
+  if(chRecActive){ chStopRec(btn,hint); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(hint) hint.textContent='此环境不支持录音（需 HTTPS 或用 Chrome/Edge 打开）。可直接打字。'; return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    chStream=stream; chChunks=[];
+    try{
+      chMediaRec=new MediaRecorder(stream);
+      chMediaRec.ondataavailable=function(e){ if(e.data && e.data.size>0) chChunks.push(e.data); };
+      chMediaRec.onstop=function(){
+        try{
+          var blob=new Blob(chChunks,{type:(chChunks[0]&&chChunks[0].type)||'audio/webm'});
+          var url=URL.createObjectURL(blob);
+          var au=document.getElementById('chMyAudio'), pbBox=document.getElementById('chPlaybackBox');
+          if(au&&pbBox){ au.src=url; pbBox.style.display='inline-flex'; }
+        }catch(e){}
+        if(chStream){ chStream.getTracks().forEach(function(t){t.stop();}); chStream=null; }
+      };
+      chMediaRec.start();
+    }catch(e){ if(hint) hint.textContent='录音启动失败：'+e.message+'。可直接打字。'; }
+    chStartRecognition(box);
+    chRecActive=true; if(btn){ btn.classList.add('recording'); btn.textContent='⏹'; }
+    if(hint) hint.textContent='🔴 录音中…（再次点击停止）· 说完可回放对比';
+  }).catch(function(err){
+    if(hint) hint.textContent='没拿到麦克风权限（'+err.name+'）。请允许麦克风，或直接打字。';
+  });
+}
+function chStopRec(btn,hint){
+  chRecActive=false;
+  try{ if(chMediaRec && chMediaRec.state!=='inactive') chMediaRec.stop(); }catch(e){}
+  try{ if(chRecog) chRecog.stop(); }catch(e){}
+  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤'; }
+  var shown=(chFinalTxt||'').trim();
+  if(hint) hint.textContent = shown ? ('已停止 · 识别到：'+shown+'（可在下方修改后发送）') : '已停止 · 点▶回放 · 识别不到可直接打字';
+}
+function chStartRecognition(box){
+  try{
+    if(!chRecog) chRecog=initRecog('en-US');
+    if(!chRecog){ var h=document.getElementById('chRecHint'); if(h) h.textContent='🔴 录音中…（此浏览器不支持自动识别，停止后打字即可）'; return; }
+    chFinalTxt='';
+    chRecog.onresult=function(e){
+      var interim='';
+      for(var k=e.resultIndex;k<e.results.length;k++){
+        var tt=e.results[k][0].transcript;
+        if(e.results[k].isFinal){ chFinalTxt += (chFinalTxt?' ':'') + tt.trim(); }
+        else { interim += tt; }
+      }
+      var shown=(chFinalTxt+' '+interim).trim();
+      if(box) box.value=shown;
+      var h=document.getElementById('chRecHint'); if(h && shown) h.textContent='🔴 识别中：'+shown;
+    };
+    chRecog.onerror=function(ev){};
+    chRecog.onend=function(){ if(chRecActive){ try{ chRecog.start(); }catch(e){} } };
+    chRecog.start();
+  }catch(e){}
+}
+function chTogglePlayback(){
+  var au=document.getElementById('chMyAudio'), btn=document.getElementById('chPbBtn'), tEl=document.getElementById('chPbTime');
+  if(!au || !au.src) return;
+  if(au.paused){
+    au.play(); if(btn) btn.textContent='⏸ 暂停';
+    au.ontimeupdate=function(){ if(tEl) tEl.textContent=au.currentTime.toFixed(1)+'s'; };
+    au.onended=function(){ if(btn) btn.textContent='▶ 回放我的录音'; };
+  } else { au.pause(); if(btn) btn.textContent='▶ 回放我的录音'; }
+}
+
 function startChallenge(){
   S.ch={ log:[], goal:'', speaker:null, done:false, busy:true, verdict:false };
   var area=document.getElementById('turnArea');
@@ -2972,7 +3042,17 @@ function renderChallenge(){
   var inputZone = S.ch.done
     ? '<div class="actions" style="margin-top:6px"><button class="btn-primary" id="chVerdictBtn">🎉 结束闯关 · 看整体总评</button></div>'
     : '<div class="ch-input-zone">'+
-        '<textarea class="ch-input" id="chInput" placeholder="用英文回应客户…（可先打字，专业词自己把关）"></textarea>'+
+        '<div class="rec-zone" style="margin-bottom:10px">'+
+          '<button class="mic-btn" id="chMicBtn">🎤</button>'+
+          '<div class="rec-hint" id="chRecHint">点麦克风开口说英文回应 · 或在下方打字</div>'+
+          '<div class="playback" id="chPlaybackBox" style="display:none">'+
+            '<button class="pb-btn" id="chPbBtn">▶ 回放我的录音</button>'+
+            '<span class="pb-time" id="chPbTime"></span>'+
+            '<audio id="chMyAudio" style="display:none"></audio>'+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:7px 11px;text-align:left">💡 语音识别仅供参考（SAP 专业词可能不准）。<b>先核对下方文本、改对再发送</b> —— AI 基于你发送的文本回应。</div>'+
+        '</div>'+
+        '<textarea class="ch-input" id="chInput" placeholder="识别结果会显示在这里，可自由编辑修正；也可直接打字…"></textarea>'+
         '<div class="actions" style="margin-top:8px">'+
           '<button class="btn-primary" id="chSendBtn">发送回应 →</button>'+
           '<button class="btn-ghost" id="chEndBtn">提前结束 · 看总评</button>'+
@@ -2985,6 +3065,8 @@ function renderChallenge(){
     inputZone;
   // wire
   document.querySelectorAll('[data-play]').forEach(function(b){ b.onclick=function(){ var idx=parseInt(b.dataset.play); var h=S.ch.log[idx]; if(h&&h.text) speak(h.text, 1); }; });
+  var mic=document.getElementById('chMicBtn'); if(mic) mic.onclick=chToggleRec;
+  var pb=document.getElementById('chPbBtn'); if(pb) pb.onclick=chTogglePlayback;
   var send=document.getElementById('chSendBtn'); if(send) send.onclick=challengeSend;
   var end=document.getElementById('chEndBtn'); if(end) end.onclick=function(){ S.ch.done=true; challengeVerdict(); };
   var vb=document.getElementById('chVerdictBtn'); if(vb) vb.onclick=challengeVerdict;
@@ -2995,6 +3077,7 @@ function renderChallenge(){
 
 function challengeSend(){
   if(!S.ch || S.ch.busy) return;
+  if(chRecActive){ chStopRec(document.getElementById('chMicBtn'), document.getElementById('chRecHint')); }  // 发送前先停录音
   var box=document.getElementById('chInput'); var ans=box? (box.value||'').trim():'';
   if(!ans){ alert('先写一句英文回应再发送～'); return; }
   S.ch.log.push({role:'user', text:ans});
