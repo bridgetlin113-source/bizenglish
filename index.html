@@ -2118,8 +2118,10 @@ function subLocate(d, asCheck){
     const cls = S.quizChecked ? (filled===b?'correct':'wrong') : (filled?'filled':'');
     html = html.replace('{'+i+'}', `<span class="gap ${cls}" data-gap="${i}">${filled||'____'}</span>`);
   });
-  // shuffle pool once per turn
-  if(!S._pool || S._poolTurn!==S.turn){ S._pool=[...q.pool].sort(()=>Math.random()-.5); S._poolTurn=S.turn; }
+  // shuffle pool once per distinct quiz (key on quiz content, not just turn index —
+  // 否则换对话/重新生成后 turn 仍为0会错误复用上一段的选项)
+  const poolKey=(q.template||'')+'|'+(q.pool||[]).join(',');
+  if(!S._pool || S._poolKey!==poolKey){ S._pool=[...q.pool].sort(()=>Math.random()-.5); S._poolKey=poolKey; }
   const used = S.quizFills.filter(Boolean);
   const pool = S._pool.map(o=>`<button class="opt ${used.includes(o)?'used':''}" data-opt="${o}">${o}</button>`).join('');
   return `
@@ -2389,11 +2391,15 @@ function speak(text, rate){
     ttsAudio.onended=ttsAudio.onpause=()=>{ if(wave)wave.classList.remove('active'); if(btn){btn.classList.remove('playing');btn.textContent='▶';} };
     ttsAudio.play().catch(function(){ speakBrowser(text, rate); });
   };
-  if(ttsCache[text]){ playUrl(ttsCache[text]); return; }
+  // 按口音选不同音色（qwen-tts 音色是不同说话人，非真实国别口音，但至少各口音听起来有区别）
+  const voiceMap={ in:'Ethan', us:'Chelsie', gb:'Serena', au:'Dylan', sea:'Jada', latam:'Sunny' };
+  const vc=voiceMap[S.accent]||'Chelsie';
+  const ck=text+'|'+vc;
+  if(ttsCache[ck]){ playUrl(ttsCache[ck]); return; }
   // 请求后端合成
   if(synth) synth.cancel();
-  postJSON({ action:'tts', text:text }).then(function(res){
-    if(res && res.audioUrl){ ttsCache[text]=res.audioUrl; playUrl(res.audioUrl); }
+  postJSON({ action:'tts', text:text, voice:vc }).then(function(res){
+    if(res && res.audioUrl){ ttsCache[ck]=res.audioUrl; playUrl(res.audioUrl); }
     else { speakBrowser(text, rate); }   // 后端失败 → 兜底
   }).catch(function(){ speakBrowser(text, rate); });
 }
