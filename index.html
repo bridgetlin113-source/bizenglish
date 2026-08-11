@@ -341,10 +341,13 @@
     .brand p{font-size:11px}
     .streak{padding:5px 10px;font-size:12px}
     .section-label{font-size:11px;margin:18px 2px 9px}
-    /* selectors: horizontal scroll rows on phone */
-    .chips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;gap:8px}
-    .chip{flex:0 0 auto;padding:9px 13px;font-size:13.5px}
-    .mchip{flex:0 0 auto}
+    /* selectors: wrap to fill screen (no horizontal scroll) */
+    .chips{flex-wrap:wrap;overflow-x:visible;gap:7px}
+    .chip{flex:0 0 auto;padding:8px 11px;font-size:12.5px}
+    .chip .diff{font-size:9px;padding:1px 5px}
+    .mchip{flex:1 1 46%;padding:8px 10px 8px 8px}
+    .mchip .mn{font-size:12.5px}
+    .mchip .mn small{font-size:9.5px}
     .scenarios{grid-template-columns:1fr 1fr;gap:9px}
     .scn{padding:13px}
     .scn h3{font-size:13.5px}
@@ -1900,12 +1903,27 @@ function startSession(){
   if(aiEnabled()){ generateDialogue(); } else { renderTurn(); }
 }
 
+// 带超时 + 自动重试的 POST（应对 iPhone Safari 偶发 "Load failed" / 超时）
+function postJSON(payload, tries){
+  tries = tries || 2;
+  function attempt(left){
+    const ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 45000) : null; // 45s 超时
+    return fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload), signal:ctrl?ctrl.signal:undefined})
+      .then(function(r){ if(timer)clearTimeout(timer); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .catch(function(err){
+        if(timer)clearTimeout(timer);
+        if(left>1){ return new Promise(function(res){ setTimeout(res,800); }).then(function(){ return attempt(left-1); }); }
+        throw err;
+      });
+  }
+  return attempt(tries);
+}
+
 // 用 AI 动态生成一段全新对话（无限续练的核心）
 function genTurns(n){
   const a=ACCENTS.find(x=>x.id===S.accent), sc=SCENARIOS.find(x=>x.id===S.scn), m=MODULES.find(x=>x.id===S.module);
-  return fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    action:'generate', scenario:sc.name, module:m.ab, moduleName:m.name, accent:a.name, turns:n
-  })}).then(function(r){return r.json();});
+  return postJSON({ action:'generate', scenario:sc.name, module:m.ab, moduleName:m.name, accent:a.name, turns:n });
 }
 // 方案A：先出第1回合立刻开练，后台再补 2 回合
 function generateDialogue(){
@@ -2304,8 +2322,7 @@ function runAIFeedback(d){
     module: (MODULES.find(function(x){return x.id===S.module;})||{}).ab||'',
     accent: (ACCENTS.find(function(x){return x.id===S.accent;})||{}).name||''
   };
-  fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-    .then(function(r){ return r.json(); })
+  postJSON(payload)
     .then(function(res){
       if(res && res.error && !res.scores){
         if(body) body.innerHTML='<div style="padding:22px;color:var(--error)">AI 反馈出错：'+(res.error||'')+'<br><span style="color:var(--text-2);font-size:12px">可在下方重试，或检查后端配置。</span></div>';
@@ -2342,7 +2359,8 @@ function renderRealFeedback(res, d){
 }
 
 // ============ AUDIO ============
-function speak(text, rate){
+// 浏览器合成（兜底）
+function speakBrowser(text, rate){
   if(!synth) return;
   synth.cancel();
   const u=new SpeechSynthesisUtterance(text);
@@ -2357,10 +2375,36 @@ function speak(text, rate){
   u.onend=()=>{ if(wave)wave.classList.remove('active'); if(btn){btn.classList.remove('playing');btn.textContent='▶';} };
   synth.speak(u);
 }
+
+// 优先用后端 TTS（qwen-tts，音质更好）；失败/未接则回退浏览器合成
+let ttsCache={}; let ttsAudio=null;
+function speak(text, rate){
+  if(!aiEnabled()){ return speakBrowser(text, rate); }
+  const wave=document.getElementById('wave'), btn=document.getElementById('playBtn');
+  const playUrl=(url)=>{
+    try{ if(ttsAudio){ ttsAudio.pause(); } }catch(e){}
+    ttsAudio=new Audio(url);
+    ttsAudio.playbackRate = rate || S.speed || 1;
+    ttsAudio.onplay=()=>{ if(wave)wave.classList.add('active'); if(btn){btn.classList.add('playing');btn.textContent='⏸';} };
+    ttsAudio.onended=ttsAudio.onpause=()=>{ if(wave)wave.classList.remove('active'); if(btn){btn.classList.remove('playing');btn.textContent='▶';} };
+    ttsAudio.play().catch(function(){ speakBrowser(text, rate); });
+  };
+  if(ttsCache[text]){ playUrl(ttsCache[text]); return; }
+  // 请求后端合成
+  if(synth) synth.cancel();
+  postJSON({ action:'tts', text:text }).then(function(res){
+    if(res && res.audioUrl){ ttsCache[text]=res.audioUrl; playUrl(res.audioUrl); }
+    else { speakBrowser(text, rate); }   // 后端失败 → 兜底
+  }).catch(function(){ speakBrowser(text, rate); });
+}
 function togglePlay(text){
   const btn=document.getElementById('playBtn');
-  if(synth && synth.speaking){ synth.cancel(); if(btn){btn.classList.remove('playing');btn.textContent='▶';} const w=document.getElementById('wave'); if(w)w.classList.remove('active'); }
-  else speak(text);
+  const playing = (synth && synth.speaking) || (ttsAudio && !ttsAudio.paused);
+  if(playing){
+    try{ if(synth) synth.cancel(); }catch(e){}
+    try{ if(ttsAudio) ttsAudio.pause(); }catch(e){}
+    if(btn){btn.classList.remove('playing');btn.textContent='▶';} const w=document.getElementById('wave'); if(w)w.classList.remove('active');
+  } else speak(text);
 }
 
 // ============ SPEECH RECOGNITION ============
