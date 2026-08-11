@@ -321,6 +321,42 @@
   .imi-res .tip{color:var(--text-2);font-size:12px;margin-top:3px}
   .imi-res .fav-btn{margin-left:6px;font-size:15px;color:var(--warn);background:none;border:none;cursor:pointer;vertical-align:middle}
 
+  /* ===== Mode toggle (练习模式) ===== */
+  .mode-toggle{display:flex;gap:10px;margin:6px 4px 2px}
+  .mode-card{flex:1;text-align:left;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--surface);transition:all .16s ease}
+  .mode-card:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+  .mode-card.active{border-color:var(--primary);background:var(--primary-soft)}
+  .mode-card .mt{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .mode-card .md{font-size:11.5px;color:var(--text-2);margin-top:3px;line-height:1.45}
+  .mode-card.active .md{color:var(--primary-dark)}
+
+  /* ===== Challenge (情景闯关) ===== */
+  .ch-goal{background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius);padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--accent-dark);line-height:1.5}
+  .ch-goal b{color:var(--accent-dark)}
+  .ch-log{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+  .bubble{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.55;position:relative}
+  .bubble.client{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}
+  .bubble.user{align-self:flex-end;background:var(--primary-soft);border-bottom-right-radius:4px;color:var(--primary-dark)}
+  .bubble .who{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .bubble .zh{font-size:12px;color:var(--text-2);margin-top:5px;padding-top:5px;border-top:1px dashed var(--border)}
+  .bubble .mini-play{font-size:13px;background:none;border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 9px;color:var(--text-2);margin-left:auto;cursor:pointer}
+  .ch-tip{align-self:flex-start;max-width:88%;background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.5}
+  .ch-input-zone{margin-top:4px}
+  .ch-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;font-family:inherit;resize:vertical;min-height:54px;background:#fff}
+  .ch-input:focus{outline:none;border-color:var(--primary)}
+  .ch-thinking{align-self:flex-start;color:var(--text-2);font-size:13px;padding:8px 4px;display:flex;align-items:center;gap:8px}
+
+  /* verdict */
+  .ch-verdict .fb-scores{margin-bottom:14px}
+  .ch-md{background:var(--surface-2);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:9px;font-size:13px;line-height:1.55}
+  .ch-md .cl{color:var(--text-2);font-size:12.5px}
+  .ch-md .bt{margin-top:5px}
+  .ch-md .bt b{color:var(--accent-dark)}
+  .ch-kx{display:flex;flex-direction:column;gap:6px}
+  .ch-kx .row{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
+  .ch-kx .row .zh{color:var(--text-2);font-size:12px}
+  .ch-kx .row .fav-btn{margin-left:auto;font-size:15px;color:var(--warn);background:none;border:none;cursor:pointer}
+
   .footer-note{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;line-height:1.6}
   /* ===== Progress / stats ===== */
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -448,6 +484,18 @@
 
     <div class="section-label">📊 我的学习记录</div>
     <div id="statsPanel"></div>
+
+    <div class="section-label">④ 选择练习模式</div>
+    <div class="mode-toggle" id="modeToggle">
+      <button class="mode-card active" data-mode="drill">
+        <div class="mt">📚 逐句精练</div>
+        <div class="md">听→自测→帮你听懂→回应→反馈，逐句吃透</div>
+      </button>
+      <button class="mode-card" data-mode="challenge">
+        <div class="mt">🎯 情景闯关</div>
+        <div class="md">AI 客户主导多轮对话，你临场应对，结束给总评</div>
+      </button>
+    </div>
 
     <div class="startbar">
       <div class="sel">
@@ -1707,7 +1755,7 @@ const BACKEND_URL = "https://bizenglish-ai.bridgetlin113.workers.dev";  // Cloud
 function aiEnabled(){ return typeof BACKEND_URL==='string' && BACKEND_URL.indexOf('http')===0; }
 let fbCache = {};  // 缓存本回合的 AI 反馈结果，避免重复请求
 
-const S = {accent:'in', module:'ec', scn:'req', turn:0, stage:'listen', path:null, helpSub:0, speed:1, selfLevel:null, myAnswer:'', quizFills:[], quizChecked:false, started:false};
+const S = {accent:'in', module:'ec', scn:'req', turn:0, stage:'listen', path:null, helpSub:0, speed:1, selfLevel:null, myAnswer:'', quizFills:[], quizChecked:false, started:false, mode:'drill', ch:null};
 const HELP_SUBS = ['locate','sound','lib','shadow'];
 let synth = window.speechSynthesis; let voices = [];
 function loadVoices(){ voices = synth ? synth.getVoices() : []; }
@@ -1795,7 +1843,7 @@ function toggleFav(sentence, ctx){
   let p=loadProg()||defaultProg(); p.favorites=p.favorites||[];
   const idx=p.favorites.findIndex(function(f){return f.text===sentence;});
   if(idx>=0){ p.favorites.splice(idx,1); } else { p.favorites.unshift({text:sentence, ctx:ctx||'', ts:Date.now()}); }
-  p.favorites=p.favorites.slice(0,100); saveProg(p);
+  p.favorites=p.favorites.slice(0,500); saveProg(p);
   return isFav(sentence);
 }
 
@@ -1927,6 +1975,10 @@ function startSession(){
   document.getElementById('session').classList.remove('hidden');
   const gf=document.getElementById('globalFoot'); gf.style.display='block';
   gf.innerHTML='🎙️ 提示：语音朗读用浏览器合成（口音效果取决于系统语音包）；口语/跟读需麦克风权限，不支持时可打字。评分为原型模拟。';
+  if(S.mode==='challenge'){
+    if(!aiEnabled()){ alert('情景闯关需要 AI 后端支持，请先配置后端。'); exitSession(); return; }
+    startChallenge(); return;
+  }
   if(aiEnabled()){ generateDialogue(); } else { renderTurn(); }
 }
 
@@ -2863,10 +2915,173 @@ function showComplete(){
   document.getElementById('homeBtn').onclick=exitSession;
 }
 
+// ============ 情景闯关（CHALLENGE，AI 主导多轮） ============
+var CH_MAX_TURNS = 4;  // 客户轮数上限（4 轮）
+
+function chMeta(){
+  var a=ACCENTS.find(function(x){return x.id===S.accent;}), s=SCENARIOS.find(function(x){return x.id===S.scn;}), m=MODULES.find(function(x){return x.id===S.module;});
+  return { accent:a?a.name:'', scenario:s?s.name:'', module:m?m.ab:'', moduleName:m?m.name:'' };
+}
+function chStepBar(){
+  // 用现有 stepBar 显示进度：客户已发生轮数 / 上限
+  var bar=document.getElementById('stepBar'); if(!bar) return;
+  var done=(S.ch&&S.ch.log?S.ch.log.filter(function(h){return h.role==='client';}).length:0);
+  var html=''; for(var i=0;i<CH_MAX_TURNS;i++){ html+='<div class="step'+(i<done?' done':(i===done?' now':''))+'"></div>'; }
+  bar.innerHTML=html;
+}
+function chSetTurnPill(){
+  var el=document.getElementById('sTurnNum'); if(!el) return;
+  var done=(S.ch&&S.ch.log?S.ch.log.filter(function(h){return h.role==='client';}).length:0);
+  el.textContent=Math.min(done,CH_MAX_TURNS);
+  var parent=el.parentNode; if(parent) parent.innerHTML='回合 <b id="sTurnNum">'+Math.min(done,CH_MAX_TURNS)+'</b> / '+CH_MAX_TURNS;
+}
+
+function startChallenge(){
+  S.ch={ log:[], goal:'', speaker:null, done:false, busy:true, verdict:false };
+  var area=document.getElementById('turnArea');
+  if(area) area.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-2)">'+
+    '<div style="font-size:34px;margin-bottom:10px">🎯</div>'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 客户正在开场…</div>'+
+    '<div style="font-size:13px">情景闯关 · 共 '+CH_MAX_TURNS+' 轮</div></div>';
+  chStepBar(); chSetTurnPill();
+  var meta=chMeta();
+  postJSON({ action:'challenge', phase:'open', maxTurns:CH_MAX_TURNS, scenario:meta.scenario, module:meta.module, moduleName:meta.moduleName, accent:meta.accent })
+    .then(function(res){
+      if(res && res.error && !res.client){ if(area) area.innerHTML=chErr('开场生成失败：'+(res.error||'')); return; }
+      S.ch.goal=res.goal||''; S.ch.speaker=res.speaker||{nm:'Client',rl:'客户',av:'🧑'};
+      S.ch.log.push({role:'client', text:res.client||'', zh:res.clientZh||''});
+      S.ch.busy=false; renderChallenge();
+    })
+    .catch(function(err){ if(area) area.innerHTML=chErr('连接后端失败：'+err.message); });
+}
+function chErr(msg){ return '<div style="text-align:center;padding:30px 16px;color:var(--error)">'+escHtml(msg)+'<br><span style="color:var(--text-2);font-size:12px">可退出后重试，或检查后端。</span></div>'; }
+
+function renderChallenge(){
+  var area=document.getElementById('turnArea'); if(!area||!S.ch) return;
+  chStepBar(); chSetTurnPill();
+  var sp=S.ch.speaker||{}; 
+  var bubbles=S.ch.log.map(function(h,i){
+    if(h.role==='client'){
+      return '<div class="bubble client"><div class="who">'+escHtml((sp.av||'🧑')+' '+(sp.nm||'客户'))+
+        '<button class="mini-play" data-play="'+i+'">🔊 听</button></div>'+escHtml(h.text)+
+        (h.zh? '<div class="zh">'+escHtml(h.zh)+'</div>':'')+'</div>';
+    }
+    return '<div class="bubble user"><div class="who">🙋 我</div>'+escHtml(h.text)+'</div>';
+  }).join('');
+  var tipHtml = (S.ch.lastTip? '<div class="ch-tip">💡 '+escHtml(S.ch.lastTip)+'</div>':'');
+  var inputZone = S.ch.done
+    ? '<div class="actions" style="margin-top:6px"><button class="btn-primary" id="chVerdictBtn">🎉 结束闯关 · 看整体总评</button></div>'
+    : '<div class="ch-input-zone">'+
+        '<textarea class="ch-input" id="chInput" placeholder="用英文回应客户…（可先打字，专业词自己把关）"></textarea>'+
+        '<div class="actions" style="margin-top:8px">'+
+          '<button class="btn-primary" id="chSendBtn">发送回应 →</button>'+
+          '<button class="btn-ghost" id="chEndBtn">提前结束 · 看总评</button>'+
+        '</div>'+
+      '</div>';
+  area.innerHTML =
+    '<div class="stage-label stage-help">🎯 情景闯关 · AI 客户主导</div>'+
+    (S.ch.goal? '<div class="ch-goal">🎯 <b>本轮目标：</b>'+escHtml(S.ch.goal)+'</div>':'')+
+    '<div class="ch-log" id="chLog">'+bubbles+tipHtml+'</div>'+
+    inputZone;
+  // wire
+  document.querySelectorAll('[data-play]').forEach(function(b){ b.onclick=function(){ var idx=parseInt(b.dataset.play); var h=S.ch.log[idx]; if(h&&h.text) speak(h.text, 1); }; });
+  var send=document.getElementById('chSendBtn'); if(send) send.onclick=challengeSend;
+  var end=document.getElementById('chEndBtn'); if(end) end.onclick=function(){ S.ch.done=true; challengeVerdict(); };
+  var vb=document.getElementById('chVerdictBtn'); if(vb) vb.onclick=challengeVerdict;
+  // auto play newest client line
+  var last=S.ch.log[S.ch.log.length-1];
+  if(last && last.role==='client' && last.text){ try{ speak(last.text,1); }catch(e){} }
+}
+
+function challengeSend(){
+  if(!S.ch || S.ch.busy) return;
+  var box=document.getElementById('chInput'); var ans=box? (box.value||'').trim():'';
+  if(!ans){ alert('先写一句英文回应再发送～'); return; }
+  S.ch.log.push({role:'user', text:ans});
+  S.ch.lastTip=null; S.ch.busy=true;
+  renderChallenge();
+  // show thinking
+  var log=document.getElementById('chLog');
+  if(log){ var t=document.createElement('div'); t.className='ch-thinking'; t.id='chThinking'; t.innerHTML='🤖 客户正在回应…'; log.appendChild(t); }
+  var meta=chMeta();
+  var history=S.ch.log.map(function(h){ return { role:h.role, text:h.text }; });
+  postJSON({ action:'challenge', phase:'reply', maxTurns:CH_MAX_TURNS, scenario:meta.scenario, module:meta.module, moduleName:meta.moduleName, accent:meta.accent, history:history })
+    .then(function(res){
+      if(res && res.error && !res.client){ S.ch.busy=false; var l=document.getElementById('chThinking'); if(l) l.innerHTML='<span style="color:var(--error)">客户回应失败：'+escHtml(res.error||'')+'</span>'; return; }
+      S.ch.log.push({role:'client', text:res.client||'', zh:res.clientZh||''});
+      S.ch.lastTip=res.tip||'';
+      if(res.done===true) S.ch.done=true;
+      S.ch.busy=false; renderChallenge();
+    })
+    .catch(function(err){ S.ch.busy=false; var l=document.getElementById('chThinking'); if(l) l.innerHTML='<span style="color:var(--error)">连接后端失败：'+escHtml(err.message)+'</span>'; });
+}
+
+function challengeVerdict(){
+  if(!S.ch) return;
+  var area=document.getElementById('turnArea');
+  if(area) area.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-2)">'+
+    '<div style="font-size:34px;margin-bottom:10px">🧑‍🏫</div>'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:6px">AI 正在生成整体总评…</div>'+
+    '<div style="font-size:13px">综合你这 '+S.ch.log.filter(function(h){return h.role==="user";}).length+' 次应对</div></div>';
+  var meta=chMeta();
+  var history=S.ch.log.map(function(h){ return { role:h.role, text:h.text }; });
+  postJSON({ action:'challenge', phase:'verdict', scenario:meta.scenario, module:meta.module, moduleName:meta.moduleName, accent:meta.accent, history:history })
+    .then(function(res){
+      if(res && res.error && !res.scores){ if(area) area.innerHTML=chErr('总评生成失败：'+(res.error||'')); return; }
+      renderChallengeVerdict(res);
+      // 计入学习记录（复用打卡逻辑：闯关每次应对算一个回合）
+      try{ var m=chMeta(); var firstClient=(S.ch.log.find(function(h){return h.role==="client";})||{}); var firstUser=(S.ch.log.find(function(h){return h.role==="user";})||{}); checkIn(m.accent+" · "+m.module+" · "+m.scenario+" · 闯关", {clientLine:firstClient.text||"", myAnswer:firstUser.text||""}); }catch(e){}
+    })
+    .catch(function(err){ if(area) area.innerHTML=chErr('连接后端失败：'+err.message); });
+}
+
+function renderChallengeVerdict(res){
+  var area=document.getElementById('turnArea'); if(!area) return;
+  var sc=res.scores||{};
+  function n(v){ return typeof v==='number'?v:0; }
+  function list(items){ return (items&&items.length?items:['—']).map(function(t){ return '<div class="fb-item">• '+escHtml(t)+'</div>'; }).join(''); }
+  var md=(res.modelDialogue&&res.modelDialogue.length)? res.modelDialogue.map(function(x){
+    return '<div class="ch-md"><div class="cl">客户：'+escHtml(x.client||'')+'</div><div class="bt"><b>更佳回应：</b>'+escHtml(x.better||'')+'</div></div>';
+  }).join('') : '';
+  var kx=(res.keyExpressions&&res.keyExpressions.length)? res.keyExpressions.map(function(k,i){
+    var on=isFav(k.en)?'⭐':'☆';
+    return '<div class="row"><div><span class="word">'+escHtml(k.en||'')+'</span> <span class="zh">'+escHtml(k.zh||'')+'</span></div><button class="fav-btn" data-kx="'+i+'">'+on+'</button></div>';
+  }).join('') : '';
+  area.innerHTML =
+    '<div class="stage-label stage-feedback">✅ 情景闯关 · 整体总评</div>'+
+    '<div class="ch-verdict">'+
+      '<div class="fb-scores">'+
+        '<div class="fb-score"><div class="ring">'+ring(n(sc.grammar),'var(--warn)')+'<div class="num">'+(sc.grammar!=null?sc.grammar:'-')+'</div></div><div class="lbl">语法/用词</div></div>'+
+        '<div class="fb-score"><div class="ring">'+ring(n(sc.expression),'var(--primary)')+'<div class="num">'+(sc.expression!=null?sc.expression:'-')+'</div></div><div class="lbl">地道表达</div></div>'+
+        '<div class="fb-score"><div class="ring">'+ring(n(sc.fluency),'var(--success)')+'<div class="num">'+(sc.fluency!=null?sc.fluency:'-')+'</div></div><div class="lbl">流利度</div></div>'+
+        '<div class="fb-score"><div class="ring">'+ring(n(sc.handling),'var(--accent)')+'<div class="num">'+(sc.handling!=null?sc.handling:'-')+'</div></div><div class="lbl">应对得体</div></div>'+
+      '</div>'+
+      (res.summary? '<div class="ch-goal" style="border-color:var(--success);background:var(--success-soft);color:var(--success)">'+escHtml(res.summary)+'</div>':'')+
+      '<div class="fb-block good"><h4>🟢 做得好</h4>'+list(res.good)+'</div>'+
+      '<div class="fb-block gram"><h4>🟠 可改进</h4>'+list(res.improve)+'</div>'+
+      (md? '<div class="fb-block express"><h4>💡 资深顾问会这样应对</h4>'+md+'</div>':'')+
+      (kx? '<div class="fb-block express"><h4>🔑 值得收藏的地道表达</h4><div class="ch-kx">'+kx+'</div></div>':'')+
+      '<div class="actions" style="margin-top:6px">'+
+        '<button class="btn-primary" id="chAgainBtn">🔁 再来一局</button>'+
+        '<button class="btn-ghost" id="chHomeBtn">返回选择</button>'+
+      '</div>'+
+      '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">🤖 由通义千问基于整段对话生成 · 发音评分需专业引擎，暂未包含</div>'+
+    '</div>';
+  // wire fav on key expressions
+  document.querySelectorAll('[data-kx]').forEach(function(b){ b.onclick=function(){
+    var i=parseInt(b.dataset.kx); var k=(res.keyExpressions||[])[i]; if(!k||!k.en) return;
+    var m=chMeta();
+    var on=toggleFav(k.en, (m.accent+' · '+m.module+' · '+m.scenario+' · 闯关')); b.textContent=on?'⭐':'☆';
+  }; });
+  var again=document.getElementById('chAgainBtn'); if(again) again.onclick=startChallenge;
+  var home=document.getElementById('chHomeBtn'); if(home) home.onclick=exitSession;
+}
+
 // ============ INIT ============
 renderAccents(); renderModules(); renderScns(); renderAccents(); syncSel(); updateStreakUI(); renderStats();
 document.getElementById('startBtn').onclick=startSession;
 document.getElementById('exitBtn').onclick=exitSession;
+document.querySelectorAll('#modeToggle .mode-card').forEach(function(b){ b.onclick=function(){ S.mode=b.dataset.mode; document.querySelectorAll('#modeToggle .mode-card').forEach(function(x){ x.classList.toggle('active', x===b); }); var sb=document.getElementById('startBtn'); if(sb) sb.innerHTML=(S.mode==='challenge'?'开始闯关 ':'开始训练 ')+'<span>→</span>'; }; });
 </script>
 </body>
 </html>
