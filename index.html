@@ -294,6 +294,33 @@
   .fb-item .now{color:var(--success);font-weight:700}
   .fb-item .word{font-family:var(--mono);font-weight:700;background:#fff;padding:1px 6px;border-radius:5px;border:1px solid var(--border)}
 
+  /* ===== Imitation (仿写练习) ===== */
+  .imi{margin-top:16px;border:1.5px solid var(--accent);border-radius:var(--radius);overflow:hidden;animation:fadeUp .3s ease both}
+  .imi-head{background:var(--accent-soft);padding:12px 16px;font-size:13.5px;font-weight:700;color:var(--accent-dark);display:flex;align-items:center;gap:8px}
+  .imi-head .sub{font-size:11.5px;font-weight:600;color:var(--accent-dark);opacity:.8;margin-left:auto}
+  .imi-body{padding:14px 16px}
+  .imi-intro{font-size:12.5px;color:var(--text-2);line-height:1.55;margin-bottom:12px}
+  .imi-item{background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 13px;margin-bottom:11px}
+  .imi-zh{font-size:14px;font-weight:600;margin-bottom:3px}
+  .imi-zh .idx{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:800;margin-right:8px;vertical-align:middle}
+  .imi-hint{font-size:11.5px;color:var(--muted);margin-bottom:8px}
+  .imi-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;font-size:15px;font-family:inherit;resize:vertical;min-height:44px;background:#fff}
+  .imi-input:focus{outline:none;border-color:var(--accent)}
+  .imi-input:disabled{background:var(--surface);color:var(--text-2)}
+  /* per-sentence result */
+  .imi-res{margin-top:9px;border-radius:var(--radius-sm);padding:10px 12px;font-size:12.8px;line-height:1.6}
+  .imi-res.good{background:var(--success-soft)}
+  .imi-res.improve{background:var(--warn-soft)}
+  .imi-res.empty{background:var(--surface)}
+  .imi-res .verdict{font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+  .imi-res.good .verdict{color:var(--success)}
+  .imi-res.improve .verdict{color:var(--warn)}
+  .imi-res.empty .verdict{color:var(--muted)}
+  .imi-res .corr{background:#fff;border:1px solid var(--border);border-radius:6px;padding:7px 10px;margin:5px 0;font-size:13px;line-height:1.5}
+  .imi-res .corr b{color:var(--accent-dark)}
+  .imi-res .tip{color:var(--text-2);font-size:12px;margin-top:3px}
+  .imi-res .fav-btn{margin-left:6px;font-size:15px;color:var(--warn);background:none;border:none;cursor:pointer;vertical-align:middle}
+
   .footer-note{text-align:center;font-size:12px;color:var(--muted);margin-top:26px;line-height:1.6}
   /* ===== Progress / stats ===== */
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -2357,11 +2384,120 @@ function renderRealFeedback(res, d){
       ((res.keyWords&&res.keyWords.length)? '<div class="fb-item" style="margin-top:8px"><b style="font-size:12.5px">🔑 关键词汇</b>'+res.keyWords.map(function(k){ return '<div style="font-size:12.5px;line-height:1.6;margin-top:4px"><span class="word">'+(k.w||'')+'</span> '+(k.zh||'')+(k.note?' <span style="color:var(--muted)">· '+k.note+'</span>':'')+'</div>'; }).join('')+'</div>':'')+
       '</div>':'')+
     '<div class="fb-block good"><h4>🟢 做得好</h4>'+list(res.good)+'</div>'+
+    '<div id="imiMount"></div>'+
     '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">🤖 由通义千问基于你的实际回答生成 · 发音评分需专业引擎，暂未包含</div>';
   // 收藏范例句按钮
   const fb=document.getElementById('favModelBtn');
   if(fb && res.modelAnswer){ fb.onclick=function(){ const a=ACCENTS.find(x=>x.id===S.accent),m=MODULES.find(x=>x.id===S.module),sc=SCENARIOS.find(x=>x.id===S.scn);
     const on=toggleFav(res.modelAnswer, (a?a.name:'')+' · '+(m?m.ab:'')+' · '+(sc?sc.name:'')); fb.textContent=on?'⭐':'☆'; }; }
+  // 仿写练习环节
+  renderImitation(res.imitationSentences, res.modelAnswer||'');
+}
+
+// ============ 仿写练习（IMITATION） ============
+// 小工具：转义用户/AI 文本进 HTML，防止注入与破版
+function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// 渲染仿写环节：3 句中文 + 输入框 + 检查按钮
+function renderImitation(sentences, modelAnswer){
+  var mount=document.getElementById('imiMount'); if(!mount) return;
+  var arr=Array.isArray(sentences)? sentences.filter(function(x){return x && (x.zh||'').trim();}) : [];
+  if(!arr.length){ mount.innerHTML=''; return; }
+  S.imiData = { items: arr, modelAnswer: modelAnswer||'' };  // 存这一回合的仿写题
+  var rows = arr.map(function(it, i){
+    return '<div class="imi-item" data-i="'+i+'">'+
+      '<div class="imi-zh"><span class="idx">'+(i+1)+'</span>'+escHtml(it.zh)+'</div>'+
+      (it.hint? '<div class="imi-hint">💡 '+escHtml(it.hint)+'</div>':'')+
+      '<textarea class="imi-input" id="imiIn'+i+'" rows="1" placeholder="用英文仿写这一句…（参照上面的参考范例句型）"></textarea>'+
+      '<div class="imi-resmount" id="imiRes'+i+'"></div>'+
+    '</div>';
+  }).join('');
+  mount.innerHTML =
+    '<div class="imi">'+
+      '<div class="imi-head">✍️ 仿写练习 <span class="sub">'+arr.length+' 句 · 巩固地道表达</span></div>'+
+      '<div class="imi-body">'+
+        '<div class="imi-intro">参照上面的<b>参考范例</b>的表达方式，把下面 '+arr.length+' 句中文仿写成英文。写完点「检查仿写」，AI 会逐句给你纠正。</div>'+
+        rows+
+        '<div class="actions" style="margin-top:4px">'+
+          '<button class="btn-accent" id="imiCheckBtn">🔍 检查仿写</button>'+
+          '<button class="btn-ghost" id="imiClearBtn">清空</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  var chk=document.getElementById('imiCheckBtn'); if(chk) chk.onclick=checkImitation;
+  var clr=document.getElementById('imiClearBtn'); if(clr) clr.onclick=function(){
+    for(var i=0;i<arr.length;i++){ var t=document.getElementById('imiIn'+i); if(t){t.value='';t.disabled=false;} var r=document.getElementById('imiRes'+i); if(r) r.innerHTML=''; }
+    if(chk){ chk.disabled=false; chk.textContent='🔍 检查仿写'; }
+  };
+}
+
+// 收集输入 → 调后端 imitationCheck → 逐句渲染纠正
+function checkImitation(){
+  if(!S.imiData || !S.imiData.items || !S.imiData.items.length) return;
+  var items=S.imiData.items;
+  var payloadItems=items.map(function(it, i){
+    var t=document.getElementById('imiIn'+i);
+    return { zh: it.zh||'', en: t? (t.value||'').trim() : '' };
+  });
+  if(!payloadItems.some(function(x){return x.en;})){
+    alert('先至少写一句英文再检查哦～'); return;
+  }
+  var chk=document.getElementById('imiCheckBtn');
+  if(chk){ chk.disabled=true; chk.textContent='AI 批改中…'; }
+  // 批改期间锁定输入
+  for(var i=0;i<items.length;i++){ var t=document.getElementById('imiIn'+i); if(t) t.disabled=true; }
+
+  if(!aiEnabled()){
+    if(chk){ chk.disabled=false; chk.textContent='🔍 检查仿写'; }
+    for(var j=0;j<items.length;j++){ var tt=document.getElementById('imiIn'+j); if(tt) tt.disabled=false; }
+    alert('未接入 AI，无法批改仿写。请先配置后端。'); return;
+  }
+
+  postJSON({ action:'imitationCheck', modelAnswer:S.imiData.modelAnswer||'', items:payloadItems })
+    .then(function(res){
+      if(res && res.error && !res.results){
+        if(chk){ chk.disabled=false; chk.textContent='🔄 重试检查'; }
+        for(var k=0;k<items.length;k++){ var t2=document.getElementById('imiIn'+k); if(t2) t2.disabled=false; }
+        var m0=document.getElementById('imiRes0'); if(m0) m0.innerHTML='<div class="imi-res improve">AI 批改出错：'+escHtml(res.error||'')+'</div>';
+        return;
+      }
+      renderImitationResults(res.results||[], payloadItems);
+      if(chk){ chk.textContent='✅ 已批改 · 可再改后重试'; chk.disabled=false; }
+    })
+    .catch(function(err){
+      if(chk){ chk.disabled=false; chk.textContent='🔄 重试检查'; }
+      for(var k=0;k<items.length;k++){ var t3=document.getElementById('imiIn'+k); if(t3) t3.disabled=false; }
+      var m1=document.getElementById('imiRes0'); if(m1) m1.innerHTML='<div class="imi-res improve">连接后端失败：'+escHtml(err.message)+'</div>';
+    });
+}
+
+// 逐句渲染纠正结果，并支持收藏「修正后的地道句」
+function renderImitationResults(results, payloadItems){
+  var VERDICT={ good:{cls:'good',ic:'✅',tx:'地道'}, improve:{cls:'improve',ic:'⚠️',tx:'可改进'}, empty:{cls:'empty',ic:'✏️',tx:'未作答'} };
+  for(var i=0;i<payloadItems.length;i++){
+    var mountEl=document.getElementById('imiRes'+i); if(!mountEl) continue;
+    var r = results[i] || {};
+    var v = VERDICT[r.verdict] || VERDICT.improve;
+    var corrected = r.corrected||'';
+    var tips = (r.tips&&r.tips.length)? r.tips : [];
+    var favInit = corrected && isFav(corrected) ? '⭐':'☆';
+    mountEl.innerHTML =
+      '<div class="imi-res '+v.cls+'">'+
+        '<div class="verdict">'+v.ic+' '+v.tx+(typeof r.score==='number'? ' · '+r.score+'分':'')+'</div>'+
+        (r.comment? '<div>'+escHtml(r.comment)+'</div>':'')+
+        (corrected? '<div class="corr"><b>地道版：</b>'+escHtml(corrected)+'<button class="fav-btn" id="imiFav'+i+'" title="收藏这句地道表达">'+favInit+'</button></div>':'')+
+        (tips.length? tips.map(function(t){return '<div class="tip">• '+escHtml(t)+'</div>';}).join('') : '')+
+      '</div>';
+    (function(idx, sent){
+      if(!sent) return;
+      var b=document.getElementById('imiFav'+idx);
+      if(b){ b.onclick=function(){
+        var a=ACCENTS.find(function(x){return x.id===S.accent;}), m=MODULES.find(function(x){return x.id===S.module;}), sc=SCENARIOS.find(function(x){return x.id===S.scn;});
+        var on=toggleFav(sent, ((a?a.name:'')+' · '+(m?m.ab:'')+' · '+(sc?sc.name:'')+' · 仿写'));
+        b.textContent=on?'⭐':'☆';
+      }; }
+    })(i, corrected);
+  }
 }
 
 // ============ AUDIO ============
