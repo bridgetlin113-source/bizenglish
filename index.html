@@ -3124,7 +3124,7 @@ function renderChallengeVerdict(res){
   function n(v){ return typeof v==='number'?v:0; }
   function list(items){ return (items&&items.length?items:['—']).map(function(t){ return '<div class="fb-item">• '+escHtml(t)+'</div>'; }).join(''); }
   var md=(res.modelDialogue&&res.modelDialogue.length)? res.modelDialogue.map(function(x){
-    return '<div class="ch-md"><div class="cl">客户：'+escHtml(x.client||'')+'</div><div class="bt"><b>更佳回应：</b>'+escHtml(x.better||'')+'</div></div>';
+    return '<div class="ch-md"><div class="cl">客户：'+escHtml(x.client||'')+'</div><div class="bt"><b>更佳回应：</b>'+escHtml(x.better||'')+'</div>'+(x.betterZh? '<div class="cl" style="margin-top:4px">🀄 '+escHtml(x.betterZh)+'</div>':'')+'</div>';
   }).join('') : '';
   var kx=(res.keyExpressions&&res.keyExpressions.length)? res.keyExpressions.map(function(k,i){
     var on=isFav(k.en)?'⭐':'☆';

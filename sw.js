@@ -1,5 +1,5 @@
 // BizEnglish Coach — Service Worker (network-first for HTML to avoid stale pages)
-const CACHE = 'bizenglish-v13';
+const CACHE = 'bizenglish-v14';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting(); // activate immediately, replace old SW
